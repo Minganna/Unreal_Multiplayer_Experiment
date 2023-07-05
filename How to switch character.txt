@@ -1,0 +1,20 @@
+How to switch character: 
+
+Step 1: get the animations from other characters if character does not have any: 
+
+1. Create an IK rig for the chosen character: right click in content browser/Animation/IK_rig
+2. In the hierarchy, select the pelvis bone and right click/set retarget root.
+3. create the necessary chains as shown in screenshot, chainExample. to do so select the necessary bones in the hierarchy and right click/New retarget chain from selected bones.
+4. save the IK rig and close, (do the same process to the character you want to get the animation from) 
+5. create a IK retargeter and select the character you want to export the animation from
+6. In the details panel add the character you want to transfer the animations to in the Target IKRig Asset field
+7. click on new pose and give it a name, select the animation and see how they look like, if they looks wrong press on edit pose and start to move the bones around until they looks fine
+
+Step 2: 
+
+1. import the character with animation to the project if the character was in another project right click on the mesh, select asset action/migrate
+2. go to the Bluprints folder and open the BP_BlasterCharacter, open the full blueprints and then viewport. 
+3. select mesh in the components view and change the Mesh and materials if necessary, save and exit the blueprint.
+4. double click on the Animation folder and BlasterAnimation_BP. double click on unequipped and ensure that each state has the animation from the current skeleton
+5. Double click on the UnequippedIdleWalkRun and switch the animations with the one from the correct character skeleton
+6. Once done, go back to the BP_BlasterCharacter  blueprints, select mesh and in the Details, ensure that the Anim Class is linked to the BlasterAnim_BP 
