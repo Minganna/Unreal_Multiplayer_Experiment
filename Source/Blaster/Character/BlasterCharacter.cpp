@@ -34,6 +34,8 @@ ABlasterCharacter::ABlasterCharacter()
 	
 	combat = CreateDefaultSubobject<UCombatComponent>(TEXT("Combat Component"));
 	combat->SetIsReplicated(true);
+	// in constructor ensure that the character can crouch by setting the boolean
+	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
 }
 
 void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -64,8 +66,15 @@ void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
 	// bind the action (button pressed) from Edit/ProjectSettings/Input to a specific class and function
+	// pressed binding
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction("Equip", IE_Pressed, this, &ABlasterCharacter::equipButtonPressed);
+	PlayerInputComponent->BindAction("Crouch", IE_Pressed, this, &ABlasterCharacter::crouchButtonPressed);
+	PlayerInputComponent->BindAction("Aim", IE_Pressed, this, &ABlasterCharacter::aimButtonPressed);
+
+	//released binding
+	PlayerInputComponent->BindAction("Crouch", IE_Released, this, &ABlasterCharacter::crouchButtonReleased);
+	PlayerInputComponent->BindAction("Aim", IE_Released, this, &ABlasterCharacter::aimButtonReleased);
 
 	// bind the axis from Edit/ProjectSettings/Input to a specific class and function
 	PlayerInputComponent->BindAxis("Move_Forward",this,&ABlasterCharacter::moveForward);
@@ -133,6 +142,40 @@ void ABlasterCharacter::equipButtonPressed()
 	}
 }
 
+void ABlasterCharacter::crouchButtonPressed()
+{
+	if (!bIsCrouched)
+	{
+		Crouch();
+	}
+	
+
+}
+
+void ABlasterCharacter::crouchButtonReleased()
+{
+	if (bIsCrouched)
+	{
+		UnCrouch();
+	}
+}
+
+void ABlasterCharacter::aimButtonPressed()
+{
+	if (combat)
+	{
+		combat->setAiming(true);
+	}
+}
+
+void ABlasterCharacter::aimButtonReleased()
+{
+	if (combat)
+	{
+		combat->setAiming(false);
+	}
+}
+
 void ABlasterCharacter::onRep_OverlappingWeapon(AWeaponMaster* lastWeapon)
 {
 	if (overlappingWeapon)
@@ -169,4 +212,15 @@ void ABlasterCharacter::setOverlappingWeapon(AWeaponMaster* weapon)
 	}
 }
 
+bool ABlasterCharacter::isWeaponEquipped()
+{
+	// return true only if combat is not null and if equipped weapon is not null
+	return (combat && combat->equippedWeapon);
+}
+
+bool ABlasterCharacter::isAiming()
+{
+	// return true only if combat is not null and if the character is aiming
+	return (combat && combat->isAiming);
+}
 

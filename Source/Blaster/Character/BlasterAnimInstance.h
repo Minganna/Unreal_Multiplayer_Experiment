@@ -36,5 +36,14 @@ private:
 	// boolean used to check if the user is adding input/ pressing any of the relevant keys
 	UPROPERTY(BlueprintReadOnly, Category = "Movement", meta = (AllowPrivateAccess = "true"))
 	bool bIsAccelerating;
+	// boolean used to check if the character has a weapon equipped
+	UPROPERTY(BlueprintReadOnly, Category = "Combat", meta = (AllowPrivateAccess = "true"))
+	bool bIsWeaponEquipped;
+	// boolean used to check if the character is crouching
+	UPROPERTY(BlueprintReadOnly, Category = "Movement", meta = (AllowPrivateAccess = "true"))
+	bool bIsCrouched;
+	// boolean used to check if the character is crouching
+	UPROPERTY(BlueprintReadOnly, Category = "Combat", meta = (AllowPrivateAccess = "true"))
+	bool bAiming;
 
 };

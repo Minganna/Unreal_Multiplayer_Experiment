@@ -6,6 +6,7 @@
 #include "Blaster/Character/BlasterCharacter.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "Components/SphereComponent.h"
+#include "Net/UnrealNetwork.h"
 
 
 // Sets default values for this component's properties
@@ -28,6 +29,17 @@ void UCombatComponent::BeginPlay()
 	
 }
 
+void UCombatComponent::setAiming(bool bAiming)
+{
+	isAiming = bAiming;
+	serverSetAiming(isAiming);
+}
+
+void UCombatComponent::serverSetAiming_Implementation(bool bAiming)
+{
+	isAiming = bAiming;
+}
+
 
 // Called every frame
 void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -35,6 +47,14 @@ void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	// ...
+}
+
+void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(UCombatComponent, equippedWeapon);
+	DOREPLIFETIME(UCombatComponent, isAiming);
 }
 
 void UCombatComponent::equipWeapon(AWeaponMaster* weaponToequip)

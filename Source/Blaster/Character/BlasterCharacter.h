@@ -36,7 +36,14 @@ protected:
 	void lookUp(float value);
 	// function used to detect if the equip input has been pressed
 	void equipButtonPressed();
-
+	// function used to detect if the crouch input has been pressed
+	void crouchButtonPressed();
+	// function used to detect if the crouch input has been released
+	void crouchButtonReleased();
+	// function used to detect if the aim input has been pressed
+	void aimButtonPressed();
+	// function used to detect if the aim input has been released
+	void aimButtonReleased();
 private:
 	// class that allow the camera to follow the player
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
@@ -65,6 +72,8 @@ private:
 public:	
 	// setter for overlappingWeapon variable
 	void setOverlappingWeapon(AWeaponMaster* weapon);
-
-
+	// getter for the weapon equipped variable
+	bool isWeaponEquipped();
+	//getter for the aiming bool
+	bool isAiming();
 };

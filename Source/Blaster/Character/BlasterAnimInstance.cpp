@@ -28,7 +28,9 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float deltaTime)
 	// ternary operator to determine if the player is pressing a key, return true if the accelleration is more than 0
 	bIsAccelerating = blasterCharacter->GetCharacterMovement()->GetCurrentAcceleration().Size() > 0.0f ? true : false;
 
-
+	bIsWeaponEquipped = blasterCharacter->isWeaponEquipped();
+	bIsCrouched = blasterCharacter->bIsCrouched;
+	bAiming = blasterCharacter->isAiming();
 }
 
 void UBlasterAnimInstance::setBlasterCharacter()
