@@ -4,6 +4,7 @@
 #include "BlasterAnimInstance.h"
 #include "BlasterCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/KismetMathLibrary.h"
 
 void UBlasterAnimInstance::NativeInitializeAnimation()
 {
@@ -31,6 +32,23 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float deltaTime)
 	bIsWeaponEquipped = blasterCharacter->isWeaponEquipped();
 	bIsCrouched = blasterCharacter->bIsCrouched;
 	bAiming = blasterCharacter->isAiming();
+
+	//offset Yaw for strafing
+	FRotator aimRotation = blasterCharacter->GetBaseAimRotation();
+	FRotator movementRotation = UKismetMathLibrary::MakeRotFromX(blasterCharacter->GetVelocity());
+	FRotator deltaRot = UKismetMathLibrary::NormalizedDeltaRotator(movementRotation, aimRotation);
+	// interpolate using the shorter path
+	deltaRotation = FMath::RInterpTo(deltaRotation, deltaRot, deltaTime, interpolationValue);
+	// getting the delta between the two world rotation to detect which way the character is strafing
+	yawOffset = deltaRotation.Yaw;
+
+	// getting the rotations to set the leaning
+	characterRotationLastFrame = characterRotation;
+	characterRotation = blasterCharacter->GetActorRotation();
+	const FRotator delta = UKismetMathLibrary::NormalizedDeltaRotator(characterRotation, characterRotationLastFrame);
+	const float target = delta.Yaw / deltaTime;
+	const float interp = FMath::FInterpTo(lean, target, deltaTime, interpolationValue);
+	lean = FMath::Clamp(interp, -clampValue, clampValue);
 }
 
 void UBlasterAnimInstance::setBlasterCharacter()

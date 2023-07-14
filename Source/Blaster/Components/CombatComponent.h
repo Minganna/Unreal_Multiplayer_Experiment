@@ -33,12 +33,15 @@ protected:
 	// remote procedure call function that allow a client to request the server to aim
 	UFUNCTION(Server, Reliable)
 	void serverSetAiming(bool bAiming);
+	// function called when the equippedWeapon is replicated
+	UFUNCTION()
+	void onRep_EquippedWeapon();
 
 private: 
 	// pointer to the blaster character
 	class ABlasterCharacter* character;
 	// pointer of the currently equipped weapon
-	UPROPERTY(Replicated)
+	UPROPERTY(ReplicatedUsing = onRep_EquippedWeapon)
 	AWeaponMaster* equippedWeapon;
 	// boolean used to check if the character is aiming
 	UPROPERTY(Replicated)

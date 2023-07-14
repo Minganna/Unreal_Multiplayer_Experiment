@@ -45,5 +45,22 @@ private:
 	// boolean used to check if the character is crouching
 	UPROPERTY(BlueprintReadOnly, Category = "Combat", meta = (AllowPrivateAccess = "true"))
 	bool bAiming;
+	// variable used to drive the character strafing
+	UPROPERTY(BlueprintReadOnly, Category = "Combat", meta = (AllowPrivateAccess = "true"))
+	float yawOffset; 
+	// variable used to drive the character leaning
+	UPROPERTY(BlueprintReadOnly, Category = "Combat", meta = (AllowPrivateAccess = "true"))
+	float lean;
+	// the character rotation value of the previous frame, needed for leaning
+	FRotator characterRotationLastFrame;
+	// the character rotation value of the current frame, needed for leaning
+	FRotator characterRotation;
+	// rotator used to interpolate the yaw and avoid the clunkiness when strafing
+	FRotator deltaRotation;
+	// used to smoth the interpolation between two rotations
+	float interpolationValue = 6.0f;
+	// used to clamp a value between a maximum positive and negative value
+	float clampValue = 90.0f;
+
 
 };
