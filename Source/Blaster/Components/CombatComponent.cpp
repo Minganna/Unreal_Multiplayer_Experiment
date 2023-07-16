@@ -17,6 +17,9 @@ UCombatComponent::UCombatComponent()
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = false;
 
+	baseWalkSpeed = 600.0f;
+	aimWalkSpeed = 450.0f;
+
 	// ...
 }
 
@@ -27,6 +30,11 @@ void UCombatComponent::BeginPlay()
 	Super::BeginPlay();
 
 	// ...
+	if (character)
+	{
+		// by default set the character walk speed to the baseWalkSpeed
+		character->GetCharacterMovement()->MaxWalkSpeed = baseWalkSpeed;
+	}
 	
 }
 
@@ -34,6 +42,21 @@ void UCombatComponent::setAiming(bool bAiming)
 {
 	isAiming = bAiming;
 	serverSetAiming(isAiming);
+	// set the speed on the client
+	if (character)
+	{
+		character->GetCharacterMovement()->MaxWalkSpeed = isAiming ? aimWalkSpeed : baseWalkSpeed;
+	}
+}
+
+void UCombatComponent::serverSetAiming_Implementation(bool bAiming)
+{
+	isAiming = bAiming;
+	// set the speed on the server to ensure that each client see the correct speed
+	if (character)
+	{
+		character->GetCharacterMovement()->MaxWalkSpeed = isAiming ? aimWalkSpeed : baseWalkSpeed;
+	}
 }
 
 void UCombatComponent::onRep_EquippedWeapon()
@@ -43,11 +66,6 @@ void UCombatComponent::onRep_EquippedWeapon()
 		character->GetCharacterMovement()->bOrientRotationToMovement = false;
 		character->bUseControllerRotationYaw = true;
 	}
-}
-
-void UCombatComponent::serverSetAiming_Implementation(bool bAiming)
-{
-	isAiming = bAiming;
 }
 
 
