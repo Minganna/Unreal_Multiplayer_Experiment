@@ -51,6 +51,12 @@ private:
 	// variable used to drive the character leaning
 	UPROPERTY(BlueprintReadOnly, Category = "Combat", meta = (AllowPrivateAccess = "true"))
 	float lean;
+	// variable used to determine the aim offset yaw rotation
+	UPROPERTY(BlueprintReadOnly, Category = "Combat", meta = (AllowPrivateAccess = "true"))
+	float AO_Yaw;
+	// variable used to determine the aim offset pitch rotation
+	UPROPERTY(BlueprintReadOnly, Category = "Combat", meta = (AllowPrivateAccess = "true"))
+	float AO_Pitch;
 	// the character rotation value of the previous frame, needed for leaning
 	FRotator characterRotationLastFrame;
 	// the character rotation value of the current frame, needed for leaning
