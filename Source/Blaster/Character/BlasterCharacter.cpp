@@ -213,6 +213,14 @@ void ABlasterCharacter::aimOffset(float deltaTime)
 	}
 
 	AO_Pitch = GetBaseAimRotation().Pitch;
+	if (AO_Pitch > 90.0f && !IsLocallyControlled())
+	{
+		// when pitch is sent to server from cleint is converted to 0-360, needs to be converted back
+		// map pitch from [270, 360) to [-90,0)
+		FVector2D inRange(270.0f, 360.0f);
+		FVector2D outRange(-90.0f, 0.0f);
+		AO_Pitch = FMath::GetMappedRangeValueClamped(inRange, outRange, AO_Pitch);
+	}
 }
 
 void ABlasterCharacter::onRep_OverlappingWeapon(AWeaponMaster* lastWeapon)
