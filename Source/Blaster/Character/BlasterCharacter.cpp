@@ -9,6 +9,8 @@
 #include "Net/UnrealNetwork.h"
 #include "Blaster/Weapon/WeaponMaster.h"
 #include "Blaster/Components/CombatComponent.h"
+#include "Components/CapsuleComponent.h"
+#include "Kismet/KismetMathLibrary.h"
 
 // Sets default values
 ABlasterCharacter::ABlasterCharacter()
@@ -36,6 +38,9 @@ ABlasterCharacter::ABlasterCharacter()
 	combat->SetIsReplicated(true);
 	// in constructor ensure that the character can crouch by setting the boolean
 	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
+	// avoid the collision with the camera
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
+	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
 }
 
 void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -57,6 +62,8 @@ void ABlasterCharacter::BeginPlay()
 void ABlasterCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	aimOffset(DeltaTime);
 
 }
 
@@ -176,6 +183,46 @@ void ABlasterCharacter::aimButtonReleased()
 	}
 }
 
+void ABlasterCharacter::aimOffset(float deltaTime)
+{
+	if (combat && combat->equippedWeapon == nullptr)
+	{
+		startingAimRotation = FRotator(0.0f, GetBaseAimRotation().Yaw, 0.0f);
+		return; // if no weapon equipped exit function
+	}
+	
+	FVector velocity = GetVelocity();
+	//setting velocity on z axes (vertical) to 0 as no relevant to determine velocity
+	velocity.Z = 0.0f;
+	float speed = velocity.Size();
+
+	bool bIsInAir = GetCharacterMovement()->IsFalling();
+
+	if (speed == 0.0f && !bIsInAir) // standing still and not jumping
+	{
+		FRotator currentAimRotation = FRotator(0.0f, GetBaseAimRotation().Yaw, 0.0f);
+		FRotator deltaAimRotation = UKismetMathLibrary::NormalizedDeltaRotator(currentAimRotation, startingAimRotation);
+		AO_Yaw = deltaAimRotation.Yaw;
+		bUseControllerRotationYaw = false;
+	}
+	if (speed > 0.0f && !bIsInAir) // running or jumping
+	{
+		startingAimRotation = FRotator(0.0f, GetBaseAimRotation().Yaw, 0.0f);
+		AO_Yaw = 0.0f;
+		bUseControllerRotationYaw = true;
+	}
+
+	AO_Pitch = GetBaseAimRotation().Pitch;
+	if (AO_Pitch > 90.0f && !IsLocallyControlled())
+	{
+		// when pitch is sent to server from cleint is converted to 0-360, needs to be converted back
+		// map pitch from [270, 360) to [-90,0)
+		FVector2D inRange(270.0f, 360.0f);
+		FVector2D outRange(-90.0f, 0.0f);
+		AO_Pitch = FMath::GetMappedRangeValueClamped(inRange, outRange, AO_Pitch);
+	}
+}
+
 void ABlasterCharacter::onRep_OverlappingWeapon(AWeaponMaster* lastWeapon)
 {
 	if (overlappingWeapon)
@@ -222,5 +269,11 @@ bool ABlasterCharacter::isAiming()
 {
 	// return true only if combat is not null and if the character is aiming
 	return (combat && combat->isAiming);
+}
+
+AWeaponMaster* ABlasterCharacter::getEquippedWeapon()
+{
+	if (combat == nullptr) return nullptr;
+	return combat->equippedWeapon;
 }
 

@@ -70,6 +70,6 @@ public:
 	void setWeaponState(EWeaponState state);
 	// getter of the areaSphere
 	FORCEINLINE USphereComponent* getAreaSphere() const { return areaSphere; }
-
-
+	// getter for the weapon mesh
+	FORCEINLINE USkeletalMeshComponent* getWeaponMesh() const { return weaponMesh; }
 };

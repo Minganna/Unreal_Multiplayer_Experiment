@@ -44,6 +44,8 @@ protected:
 	void aimButtonPressed();
 	// function used to detect if the aim input has been released
 	void aimButtonReleased();
+	// function used to calculate the yaw and pitch offset
+	void aimOffset(float deltaTime);
 private:
 	// class that allow the camera to follow the player
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
@@ -67,6 +69,12 @@ private:
 	// remote procedure call function that allow a client to request the server to equip a weapon
 	UFUNCTION(Server, Reliable)
 	void serverEquipButtonPress();
+	// variable used to determine the aim offset yaw rotation
+	float AO_Yaw;
+	// variable used to determine the aim offset pitch rotation
+	float AO_Pitch;
+	// used to keep track of the rotation when not moving
+	FRotator startingAimRotation;
 
 
 public:	
@@ -76,4 +84,10 @@ public:
 	bool isWeaponEquipped();
 	//getter for the aiming bool
 	bool isAiming();
+	//getter for the aim offset yaw
+	FORCEINLINE float getAO_YAW() const { return AO_Yaw; }
+	//getter for the aim offset pitch
+	FORCEINLINE float getAO_Pitch() const { return AO_Pitch; }
+	//getter of the equipped weapon
+	AWeaponMaster* getEquippedWeapon();
 };

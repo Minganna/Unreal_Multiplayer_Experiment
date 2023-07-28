@@ -46,6 +46,12 @@ private:
 	// boolean used to check if the character is aiming
 	UPROPERTY(Replicated)
 	bool isAiming;
+	// used to set the speed while the character is not aiming
+	UPROPERTY(EditAnywhere)
+	float baseWalkSpeed;
+	// used to set the speed while the character is aiming
+	UPROPERTY(EditAnywhere)
+	float aimWalkSpeed;
 
 public:	
 	

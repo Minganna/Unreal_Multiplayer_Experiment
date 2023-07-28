@@ -39,6 +39,8 @@ private:
 	// boolean used to check if the character has a weapon equipped
 	UPROPERTY(BlueprintReadOnly, Category = "Combat", meta = (AllowPrivateAccess = "true"))
 	bool bIsWeaponEquipped;
+	// reference of the weapon equipped
+	class AWeaponMaster* equippedWeapon;
 	// boolean used to check if the character is crouching
 	UPROPERTY(BlueprintReadOnly, Category = "Movement", meta = (AllowPrivateAccess = "true"))
 	bool bIsCrouched;
@@ -51,6 +53,12 @@ private:
 	// variable used to drive the character leaning
 	UPROPERTY(BlueprintReadOnly, Category = "Combat", meta = (AllowPrivateAccess = "true"))
 	float lean;
+	// variable used to determine the aim offset yaw rotation
+	UPROPERTY(BlueprintReadOnly, Category = "Combat", meta = (AllowPrivateAccess = "true"))
+	float AO_Yaw;
+	// variable used to determine the aim offset pitch rotation
+	UPROPERTY(BlueprintReadOnly, Category = "Combat", meta = (AllowPrivateAccess = "true"))
+	float AO_Pitch;
 	// the character rotation value of the previous frame, needed for leaning
 	FRotator characterRotationLastFrame;
 	// the character rotation value of the current frame, needed for leaning
@@ -61,6 +69,9 @@ private:
 	float interpolationValue = 6.0f;
 	// used to clamp a value between a maximum positive and negative value
 	float clampValue = 90.0f;
+	// transform that dictate the position of the left hand of the character 
+	UPROPERTY(BlueprintReadOnly, Category = "Combat", meta = (AllowPrivateAccess = "true"))
+	FTransform leftHandTransform;
 
 
 };
