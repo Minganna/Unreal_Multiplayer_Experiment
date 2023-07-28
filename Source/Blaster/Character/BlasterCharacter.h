@@ -88,4 +88,6 @@ public:
 	FORCEINLINE float getAO_YAW() const { return AO_Yaw; }
 	//getter for the aim offset pitch
 	FORCEINLINE float getAO_Pitch() const { return AO_Pitch; }
+	//getter of the equipped weapon
+	AWeaponMaster* getEquippedWeapon();
 };

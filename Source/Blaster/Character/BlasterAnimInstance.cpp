@@ -5,6 +5,7 @@
 #include "BlasterCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Blaster/Weapon/WeaponMaster.h"
 
 void UBlasterAnimInstance::NativeInitializeAnimation()
 {
@@ -12,6 +13,7 @@ void UBlasterAnimInstance::NativeInitializeAnimation()
 
 	setBlasterCharacter();
 }
+
 void UBlasterAnimInstance::NativeUpdateAnimation(float deltaTime)
 {
 	Super::NativeUpdateAnimation(deltaTime);
@@ -30,6 +32,7 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float deltaTime)
 	bIsAccelerating = blasterCharacter->GetCharacterMovement()->GetCurrentAcceleration().Size() > 0.0f ? true : false;
 
 	bIsWeaponEquipped = blasterCharacter->isWeaponEquipped();
+	equippedWeapon = blasterCharacter->getEquippedWeapon();
 	bIsCrouched = blasterCharacter->bIsCrouched;
 	bAiming = blasterCharacter->isAiming();
 
@@ -52,6 +55,18 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float deltaTime)
 
 	AO_Yaw = blasterCharacter->getAO_YAW();
 	AO_Pitch = blasterCharacter->getAO_Pitch();
+
+	if (bIsWeaponEquipped && equippedWeapon && equippedWeapon->getWeaponMesh() && blasterCharacter ->GetMesh())
+	{
+		// create a socket in the weapon root and call it LeftHandSocket
+		leftHandTransform = equippedWeapon->getWeaponMesh()->GetSocketTransform(FName("LeftHandSocket"),ERelativeTransformSpace::RTS_World);
+		//get the correct position and rotation of the left hand based on the bone of the right hand
+		FVector outPosition;
+		FRotator outRotator;
+		blasterCharacter->GetMesh()->TransformToBoneSpace(FName("hand_r"), leftHandTransform.GetLocation(), FRotator::ZeroRotator, outPosition, outRotator);
+		leftHandTransform.SetLocation(outPosition);
+		leftHandTransform.SetRotation(FQuat(outRotator));
+	}
 }
 
 void UBlasterAnimInstance::setBlasterCharacter()
