@@ -72,6 +72,8 @@ private:
 	void serverEquipButtonPress();
 	// variable used to determine the aim offset yaw rotation
 	float AO_Yaw;
+	// value used to check if the character needs to rotate the root bone
+	float interpAO_Yaw;
 	// variable used to determine the aim offset pitch rotation
 	float AO_Pitch;
 	// used to keep track of the rotation when not moving

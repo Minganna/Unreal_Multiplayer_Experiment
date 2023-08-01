@@ -205,7 +205,11 @@ void ABlasterCharacter::aimOffset(float deltaTime)
 		FRotator currentAimRotation = FRotator(0.0f, GetBaseAimRotation().Yaw, 0.0f);
 		FRotator deltaAimRotation = UKismetMathLibrary::NormalizedDeltaRotator(currentAimRotation, startingAimRotation);
 		AO_Yaw = deltaAimRotation.Yaw;
-		bUseControllerRotationYaw = false;
+		if (turningInPlace == ETurningInPlace::ETIP_None)
+		{
+			interpAO_Yaw = AO_Yaw;
+		}
+		bUseControllerRotationYaw = true;
 		turnInPlace(deltaTime);
 	}
 	if (speed > 0.0f && !bIsInAir) // running or jumping
@@ -236,6 +240,17 @@ void ABlasterCharacter::turnInPlace(float deltaTime)
 	else if (AO_Yaw < -90.0f)
 	{
 		turningInPlace = ETurningInPlace::ETIP_Left;
+	}
+	if (turningInPlace != ETurningInPlace::ETIP_None)
+	{
+		// if the character is not turning in place rotate the root bone to face the camera direction
+		interpAO_Yaw = FMath::FInterpTo(interpAO_Yaw, 0.0f, deltaTime, 4.0f);
+		AO_Yaw = interpAO_Yaw;
+		if (FMath::Abs(AO_Yaw) < 15.0f)
+		{
+			turningInPlace = ETurningInPlace::ETIP_None;
+			startingAimRotation = FRotator(0.0f, GetBaseAimRotation().Yaw, 0.0f);
+		}
 	}
 }
 
