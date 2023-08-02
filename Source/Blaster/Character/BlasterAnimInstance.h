@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Animation/AnimInstance.h"
+#include "Blaster/Types/TurningInPlace.h"
 #include "BlasterAnimInstance.generated.h"
 
 /**
@@ -72,6 +73,9 @@ private:
 	// transform that dictate the position of the left hand of the character 
 	UPROPERTY(BlueprintReadOnly, Category = "Combat", meta = (AllowPrivateAccess = "true"))
 	FTransform leftHandTransform;
+	// enum used to detect if the camera reached a certain point and the character needs to start turning in place
+	UPROPERTY(BlueprintReadOnly, Category = "Movement", meta = (AllowPrivateAccess = "true"))
+	ETurningInPlace turningInPlace;
 
 
 };

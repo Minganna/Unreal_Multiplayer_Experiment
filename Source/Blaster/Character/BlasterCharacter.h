@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Blaster/Types/TurningInPlace.h"
 #include "BlasterCharacter.generated.h"
 
 UCLASS()
@@ -71,10 +72,16 @@ private:
 	void serverEquipButtonPress();
 	// variable used to determine the aim offset yaw rotation
 	float AO_Yaw;
+	// value used to check if the character needs to rotate the root bone
+	float interpAO_Yaw;
 	// variable used to determine the aim offset pitch rotation
 	float AO_Pitch;
 	// used to keep track of the rotation when not moving
 	FRotator startingAimRotation;
+	// enum used to detect if the camera reached a certain point and the character needs to start turning in place
+	ETurningInPlace turningInPlace;
+	// function used to determine if the character should turn in place base by the offset yaw
+	void turnInPlace(float deltaTime);
 
 
 public:	
@@ -88,6 +95,8 @@ public:
 	FORCEINLINE float getAO_YAW() const { return AO_Yaw; }
 	//getter for the aim offset pitch
 	FORCEINLINE float getAO_Pitch() const { return AO_Pitch; }
+	//getter for turning in place
+	FORCEINLINE ETurningInPlace getTurningInPlace() const { return turningInPlace; }
 	//getter of the equipped weapon
 	AWeaponMaster* getEquippedWeapon();
 };

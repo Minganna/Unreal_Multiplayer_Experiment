@@ -41,6 +41,11 @@ ABlasterCharacter::ABlasterCharacter()
 	// avoid the collision with the camera
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
 	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
+
+	turningInPlace = ETurningInPlace::ETIP_None;
+	// ensure the min and net frequency are set up to ideal values to remove animations potential issues
+	NetUpdateFrequency = 66.0f;
+	MinNetUpdateFrequency = 33.0f;
 }
 
 void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -203,13 +208,19 @@ void ABlasterCharacter::aimOffset(float deltaTime)
 		FRotator currentAimRotation = FRotator(0.0f, GetBaseAimRotation().Yaw, 0.0f);
 		FRotator deltaAimRotation = UKismetMathLibrary::NormalizedDeltaRotator(currentAimRotation, startingAimRotation);
 		AO_Yaw = deltaAimRotation.Yaw;
-		bUseControllerRotationYaw = false;
+		if (turningInPlace == ETurningInPlace::ETIP_None)
+		{
+			interpAO_Yaw = AO_Yaw;
+		}
+		bUseControllerRotationYaw = true;
+		turnInPlace(deltaTime);
 	}
 	if (speed > 0.0f && !bIsInAir) // running or jumping
 	{
 		startingAimRotation = FRotator(0.0f, GetBaseAimRotation().Yaw, 0.0f);
 		AO_Yaw = 0.0f;
 		bUseControllerRotationYaw = true;
+		turningInPlace = ETurningInPlace::ETIP_None;
 	}
 
 	AO_Pitch = GetBaseAimRotation().Pitch;
@@ -220,6 +231,29 @@ void ABlasterCharacter::aimOffset(float deltaTime)
 		FVector2D inRange(270.0f, 360.0f);
 		FVector2D outRange(-90.0f, 0.0f);
 		AO_Pitch = FMath::GetMappedRangeValueClamped(inRange, outRange, AO_Pitch);
+	}
+}
+
+void ABlasterCharacter::turnInPlace(float deltaTime)
+{
+	if (AO_Yaw > 90.0f)
+	{
+		turningInPlace = ETurningInPlace::ETIP_Right;
+	}
+	else if (AO_Yaw < -90.0f)
+	{
+		turningInPlace = ETurningInPlace::ETIP_Left;
+	}
+	if (turningInPlace != ETurningInPlace::ETIP_None)
+	{
+		// if the character is not turning in place rotate the root bone to face the camera direction
+		interpAO_Yaw = FMath::FInterpTo(interpAO_Yaw, 0.0f, deltaTime, 4.0f);
+		AO_Yaw = interpAO_Yaw;
+		if (FMath::Abs(AO_Yaw) < 15.0f)
+		{
+			turningInPlace = ETurningInPlace::ETIP_None;
+			startingAimRotation = FRotator(0.0f, GetBaseAimRotation().Yaw, 0.0f);
+		}
 	}
 }
 
