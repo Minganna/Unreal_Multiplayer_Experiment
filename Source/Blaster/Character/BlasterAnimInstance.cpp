@@ -5,6 +5,7 @@
 #include "BlasterCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Kismet/GameplayStatics.h"
 #include "Blaster/Weapon/WeaponMaster.h"
 
 void UBlasterAnimInstance::NativeInitializeAnimation()
@@ -75,5 +76,13 @@ void UBlasterAnimInstance::setBlasterCharacter()
 	if (blasterCharacter == nullptr)
 	{
 		blasterCharacter = Cast<ABlasterCharacter>(TryGetPawnOwner());
+	}
+}
+
+void UBlasterAnimInstance::playCrouchFootsteps()
+{
+	if (blasterCharacter && crouchFootsteps && blasterCharacter->IsLocallyControlled())
+	{
+		UGameplayStatics::PlaySound2D(GetWorld(), crouchFootsteps, crouchWalkVolume, 1.0f, 0.0f);
 	}
 }

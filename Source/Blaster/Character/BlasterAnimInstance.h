@@ -25,6 +25,9 @@ public:
 private:
 	//function used to initialise blaster character
 	void setBlasterCharacter();
+	//Function used to play the footsteps when crouching only in the local machine
+	UFUNCTION(BlueprintCallable)
+	void playCrouchFootsteps();
 	//referece to the blaster character class
 	UPROPERTY(BlueprintReadOnly, Category = "Character", meta = (AllowPrivateAccess = "true"))
 	class ABlasterCharacter* blasterCharacter;
@@ -76,6 +79,13 @@ private:
 	// enum used to detect if the camera reached a certain point and the character needs to start turning in place
 	UPROPERTY(BlueprintReadOnly, Category = "Movement", meta = (AllowPrivateAccess = "true"))
 	ETurningInPlace turningInPlace;
+	//the crouching footstep sound
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound", meta = (AllowPrivateAccess = "true"))
+	USoundBase* crouchFootsteps;
+	//crouch walk sound volume 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound", meta = (AllowPrivateAccess = "true"))
+	float crouchWalkVolume= 0.3f;
+
 
 
 };
