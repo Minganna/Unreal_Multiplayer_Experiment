@@ -47,6 +47,9 @@ protected:
 	void aimButtonReleased();
 	// function used to calculate the yaw and pitch offset
 	void aimOffset(float deltaTime);
+	//Add possibility to override the Jump function
+	virtual void Jump() override;
+
 private:
 	// class that allow the camera to follow the player
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))

@@ -41,6 +41,8 @@ ABlasterCharacter::ABlasterCharacter()
 	// avoid the collision with the camera
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
 	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
+	//set the rotation yaw to a higher value to reduce the time spent on the character rotating
+	GetCharacterMovement()->RotationRate = FRotator(0.0f, 0.0f, 850.0f);
 
 	turningInPlace = ETurningInPlace::ETIP_None;
 	// ensure the min and net frequency are set up to ideal values to remove animations potential issues
@@ -79,7 +81,7 @@ void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 
 	// bind the action (button pressed) from Edit/ProjectSettings/Input to a specific class and function
 	// pressed binding
-	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
+	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ABlasterCharacter::Jump);
 	PlayerInputComponent->BindAction("Equip", IE_Pressed, this, &ABlasterCharacter::equipButtonPressed);
 	PlayerInputComponent->BindAction("Crouch", IE_Pressed, this, &ABlasterCharacter::crouchButtonPressed);
 	PlayerInputComponent->BindAction("Aim", IE_Pressed, this, &ABlasterCharacter::aimButtonPressed);
@@ -232,6 +234,12 @@ void ABlasterCharacter::aimOffset(float deltaTime)
 		FVector2D outRange(-90.0f, 0.0f);
 		AO_Pitch = FMath::GetMappedRangeValueClamped(inRange, outRange, AO_Pitch);
 	}
+}
+
+void ABlasterCharacter::Jump()
+{
+	//(possibily adding the  grappling hook mechanic)
+	Super::Jump();
 }
 
 void ABlasterCharacter::turnInPlace(float deltaTime)
