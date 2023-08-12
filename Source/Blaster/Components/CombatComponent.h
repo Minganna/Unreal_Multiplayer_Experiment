@@ -24,6 +24,8 @@ public:
 	friend class ABlasterCharacter;
 	// function used to equip a weapon to the character
 	void equipWeapon(AWeaponMaster* weaponToequip);
+	// calculate the distance to surface and determine if character can grapple to it
+	FVector grapplingLineTrace(FVector currentPos);
 
 protected:
 	// Called when the game starts
@@ -36,6 +38,9 @@ protected:
 	// function called when the equippedWeapon is replicated
 	UFUNCTION()
 	void onRep_EquippedWeapon();
+
+	//getter for the isGrappling 
+	FORCEINLINE bool getIsGrappling() const { return isGrappling; }
 
 private: 
 	// pointer to the blaster character
@@ -52,6 +57,9 @@ private:
 	// used to set the speed while the character is aiming
 	UPROPERTY(EditAnywhere)
 	float aimWalkSpeed;
+	// bool that keep track if the character is grappling
+	bool isGrappling;
+
 
 public:	
 	

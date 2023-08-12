@@ -8,6 +8,7 @@
 #include "Engine/SkeletalMeshSocket.h"
 #include "Components/SphereComponent.h"
 #include "Net/UnrealNetwork.h"
+#include "Camera/CameraComponent.h"
 
 
 // Sets default values for this component's properties
@@ -49,6 +50,38 @@ void UCombatComponent::setAiming(bool bAiming)
 	}
 }
 
+FVector UCombatComponent::grapplingLineTrace(FVector currentPos)
+{
+	FVector locationToGrapple = currentPos;
+	isGrappling = false;
+	if (character)
+	{
+		UCameraComponent* mainCamera = character->getMainCamera();
+
+		if (mainCamera)
+		{
+			FVector characterLocation = currentPos;
+			FVector cameraFwd = mainCamera->GetForwardVector();
+			FVector cameraFwdLength = (cameraFwd * 40000.0f) + characterLocation;
+			FVector forwardMinusCollider = cameraFwd * (-34.0f);
+			
+
+
+			FHitResult outHit;
+			FCollisionQueryParams traceParams;
+			traceParams.AddIgnoredActor(character);
+			GetWorld()->LineTraceSingleByChannel(outHit, characterLocation, cameraFwdLength, ECC_Pawn, traceParams);
+			DrawDebugLine(GetWorld(), characterLocation, cameraFwdLength, outHit.bBlockingHit ? FColor::Blue : FColor::Red, false, 2.0f);
+			if (outHit.bBlockingHit)
+			{
+				isGrappling = true;
+				locationToGrapple = outHit.ImpactPoint + forwardMinusCollider;
+			}
+		}
+	}
+	return locationToGrapple;
+}
+
 void UCombatComponent::serverSetAiming_Implementation(bool bAiming)
 {
 	isAiming = bAiming;
@@ -58,6 +91,7 @@ void UCombatComponent::serverSetAiming_Implementation(bool bAiming)
 		character->GetCharacterMovement()->MaxWalkSpeed = isAiming ? aimWalkSpeed : baseWalkSpeed;
 	}
 }
+
 
 void UCombatComponent::onRep_EquippedWeapon()
 {

@@ -25,6 +25,9 @@ public:
 	virtual void PostInitializeComponents() override;
 
 protected:
+	//Blueprint variable used to move towards a object, this is a blueprint event remembe to check blueprint implementation
+	UFUNCTION(BlueprintImplementableEvent)
+	void tryGrappling(FVector attachPoint);
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 	// Function used to move the character in forward/backward direction
@@ -100,6 +103,8 @@ public:
 	FORCEINLINE float getAO_Pitch() const { return AO_Pitch; }
 	//getter for turning in place
 	FORCEINLINE ETurningInPlace getTurningInPlace() const { return turningInPlace; }
+	//getter for the camera
+	FORCEINLINE UCameraComponent* getMainCamera() const { return mainCamera; }
 	//getter of the equipped weapon
 	AWeaponMaster* getEquippedWeapon();
 };

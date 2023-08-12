@@ -240,6 +240,16 @@ void ABlasterCharacter::Jump()
 {
 	//(possibily adding the  grappling hook mechanic)
 	Super::Jump();
+	//check if the character is already falling, if it is, attempt grappling hook
+	if (GetCharacterMovement()->IsFalling())
+	{
+		FVector attachPoint = combat->grapplingLineTrace(GetActorLocation());
+		if (combat->getIsGrappling())
+		{
+			tryGrappling(attachPoint);
+		}
+		
+	}
 }
 
 void ABlasterCharacter::turnInPlace(float deltaTime)
