@@ -25,9 +25,7 @@ public:
 	virtual void PostInitializeComponents() override;
 
 protected:
-	//Blueprint variable used to move towards a object, this is a blueprint event remembe to check blueprint implementation
-	UFUNCTION(BlueprintImplementableEvent)
-	void tryGrappling(FVector attachPoint);
+
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 	// Function used to move the character in forward/backward direction
@@ -53,6 +51,17 @@ protected:
 	//Add possibility to override the Jump function
 	virtual void Jump() override;
 
+	//Grappling logic
+	//initialise the grapple mesh
+	void initialiseGrappleMesh();
+	//Blueprint variable used to move towards a object, this is a blueprint event remembe to check blueprint implementation
+	UFUNCTION(BlueprintImplementableEvent)
+	void tryGrappling(FVector attachPoint);
+	//spawn the rope/tongue object
+	void spawnGrappleMesh();
+	// function called from blueprint when the character reached the destination
+	UFUNCTION(BlueprintCallable)
+	void destroyGrappleMesh();
 private:
 	// class that allow the camera to follow the player
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
@@ -63,10 +72,12 @@ private:
 	//Widget that display information on top of the character's head
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class UWidgetComponent* OverheadWidget;
-
 	// used to store a reference to the weapon the character is colliding from (that can be picked up)
 	UPROPERTY(ReplicatedUsing = onRep_OverlappingWeapon)
 	class AWeaponMaster* overlappingWeapon;
+	// used to store a reference to the current attachPoint
+	UPROPERTY(Replicated)
+	FVector travelPoint;
 	// function called when overlappingWeapon get replicated
 	UFUNCTION()
 	void onRep_OverlappingWeapon(AWeaponMaster* lastWeapon);
@@ -88,6 +99,26 @@ private:
 	ETurningInPlace turningInPlace;
 	// function used to determine if the character should turn in place base by the offset yaw
 	void turnInPlace(float deltaTime);
+	// the tongue/rope blueprint object
+	UBlueprint* BP_grappleMeshToSpawn;
+
+
+	//Grappling logic
+	// remote procedure call function that allow a client to request the server to grapple
+	UFUNCTION(Server, Reliable)
+	void serverTryGrapple();
+	// destroy the grapple mesh for a client
+	UFUNCTION(Server, Reliable)
+	void serverDestroyGrappleMesh();
+	// function called when the tongue/rope object get replicated and it requires to be set the start end pos
+	UFUNCTION()
+	void onRep_GrappleMesh();
+	// the tongue/rope object
+	UPROPERTY(ReplicatedUsing = onRep_GrappleMesh)
+	class AGrapplinMesh* grappleMeshToSpawn;
+	//transform location where the grapple will spawn
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components", meta = (AllowPrivateAccess = "true"))
+	USceneComponent* grappleSpawnLocation;
 
 
 public:	
@@ -107,4 +138,8 @@ public:
 	FORCEINLINE UCameraComponent* getMainCamera() const { return mainCamera; }
 	//getter of the equipped weapon
 	AWeaponMaster* getEquippedWeapon();
+
+	//Grappling logic
+	//getter for the camera
+	FORCEINLINE USceneComponent* getGrappleTransform() const { return grappleSpawnLocation; }
 };

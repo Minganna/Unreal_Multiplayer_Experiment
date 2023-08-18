@@ -71,7 +71,7 @@ FVector UCombatComponent::grapplingLineTrace(FVector currentPos)
 			FCollisionQueryParams traceParams;
 			traceParams.AddIgnoredActor(character);
 			GetWorld()->LineTraceSingleByChannel(outHit, characterLocation, cameraFwdLength, ECC_Pawn, traceParams);
-			DrawDebugLine(GetWorld(), characterLocation, cameraFwdLength, outHit.bBlockingHit ? FColor::Blue : FColor::Red, false, 2.0f);
+			//DrawDebugLine(GetWorld(), characterLocation, cameraFwdLength, outHit.bBlockingHit ? FColor::Blue : FColor::Red, false, 2.0f);
 			if (outHit.bBlockingHit)
 			{
 				isGrappling = true;

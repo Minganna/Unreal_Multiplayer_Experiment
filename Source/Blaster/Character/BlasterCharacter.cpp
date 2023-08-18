@@ -11,6 +11,7 @@
 #include "Blaster/Components/CombatComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Blaster/Tools/GrapplinMesh.h"
 
 // Sets default values
 ABlasterCharacter::ABlasterCharacter()
@@ -36,6 +37,9 @@ ABlasterCharacter::ABlasterCharacter()
 	
 	combat = CreateDefaultSubobject<UCombatComponent>(TEXT("Combat Component"));
 	combat->SetIsReplicated(true);
+	//Create the spawning point
+	grappleSpawnLocation = CreateDefaultSubobject<USceneComponent>(TEXT("Spawning point"));
+	grappleSpawnLocation->SetupAttachment(RootComponent);
 	// in constructor ensure that the character can crouch by setting the boolean
 	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
 	// avoid the collision with the camera
@@ -50,11 +54,39 @@ ABlasterCharacter::ABlasterCharacter()
 	MinNetUpdateFrequency = 33.0f;
 }
 
+void ABlasterCharacter::initialiseGrappleMesh()
+{
+	UObject* ObjectToSpawn = nullptr;
+	ObjectToSpawn = Cast<UObject>(StaticLoadObject(UObject::StaticClass(), NULL, TEXT("/Game/Blueprints/Tools/BP_GrapplinMesh.BP_GrapplinMesh")));
+	if (ObjectToSpawn)
+	{
+		BP_grappleMeshToSpawn = Cast<UBlueprint>(ObjectToSpawn);
+	}
+}
+
+void ABlasterCharacter::spawnGrappleMesh()
+{
+	if (grappleSpawnLocation)
+	{
+		FTransform spawnTransform = grappleSpawnLocation->GetComponentTransform();
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.Owner = this;
+		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+		grappleMeshToSpawn = GetWorld()->SpawnActor<AGrapplinMesh>(BP_grappleMeshToSpawn->GeneratedClass, spawnTransform, SpawnParams);
+		if (grappleMeshToSpawn)
+		{
+			grappleMeshToSpawn->setCharacter(this);
+			grappleMeshToSpawn->setPoints(travelPoint);
+		}
+	}
+}
+
 void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME_CONDITION(ABlasterCharacter, overlappingWeapon, COND_OwnerOnly);
+	DOREPLIFETIME_CONDITION(ABlasterCharacter, grappleMeshToSpawn, COND_OwnerOnly);
 }
 
 
@@ -62,6 +94,7 @@ void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 void ABlasterCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+	initialiseGrappleMesh();
 	
 }
 
@@ -243,12 +276,19 @@ void ABlasterCharacter::Jump()
 	//check if the character is already falling, if it is, attempt grappling hook
 	if (GetCharacterMovement()->IsFalling())
 	{
-		FVector attachPoint = combat->grapplingLineTrace(GetActorLocation());
-		if (combat->getIsGrappling())
+		travelPoint = combat->grapplingLineTrace(GetActorLocation());
+		if (combat && combat->getIsGrappling())
 		{
-			tryGrappling(attachPoint);
-		}
-		
+			if (HasAuthority())
+			{
+				tryGrappling(travelPoint);
+				spawnGrappleMesh();
+			}
+			else
+			{
+				serverTryGrapple();
+			}
+		}	
 	}
 }
 
@@ -285,6 +325,29 @@ void ABlasterCharacter::onRep_OverlappingWeapon(AWeaponMaster* lastWeapon)
 	{
 		lastWeapon->showPickupWidget(false);
 	}
+}
+
+
+void ABlasterCharacter::serverDestroyGrappleMesh_Implementation()
+{
+	grappleMeshToSpawn->Destroy();
+}
+
+void ABlasterCharacter::onRep_GrappleMesh()
+{
+
+	if (grappleMeshToSpawn)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("one rep grapple"));
+		grappleMeshToSpawn->setCharacter(this);
+		grappleMeshToSpawn->setPoints(travelPoint);
+	}
+}
+
+void ABlasterCharacter::serverTryGrapple_Implementation()
+{
+	tryGrappling(travelPoint);
+	spawnGrappleMesh();
 }
 
 void ABlasterCharacter::serverEquipButtonPress_Implementation()
@@ -327,5 +390,21 @@ AWeaponMaster* ABlasterCharacter::getEquippedWeapon()
 {
 	if (combat == nullptr) return nullptr;
 	return combat->equippedWeapon;
+}
+
+void ABlasterCharacter::destroyGrappleMesh()
+{
+	if (grappleMeshToSpawn)
+	{
+		if (HasAuthority())
+		{
+			grappleMeshToSpawn->Destroy();
+		}
+		else
+		{
+			serverDestroyGrappleMesh();
+		}
+	}
+
 }
 
