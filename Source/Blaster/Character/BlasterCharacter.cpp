@@ -11,6 +11,7 @@
 #include "Blaster/Components/CombatComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "BlasterAnimInstance.h"
 
 // Sets default values
 ABlasterCharacter::ABlasterCharacter()
@@ -85,10 +86,12 @@ void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	PlayerInputComponent->BindAction("Equip", IE_Pressed, this, &ABlasterCharacter::equipButtonPressed);
 	PlayerInputComponent->BindAction("Crouch", IE_Pressed, this, &ABlasterCharacter::crouchButtonPressed);
 	PlayerInputComponent->BindAction("Aim", IE_Pressed, this, &ABlasterCharacter::aimButtonPressed);
+	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &ABlasterCharacter::fireButtonPressed);
 
 	//released binding
 	PlayerInputComponent->BindAction("Crouch", IE_Released, this, &ABlasterCharacter::crouchButtonReleased);
 	PlayerInputComponent->BindAction("Aim", IE_Released, this, &ABlasterCharacter::aimButtonReleased);
+	PlayerInputComponent->BindAction("Fire", IE_Released, this, &ABlasterCharacter::fireButtonReleased);
 
 	// bind the axis from Edit/ProjectSettings/Input to a specific class and function
 	PlayerInputComponent->BindAxis("Move_Forward",this,&ABlasterCharacter::moveForward);
@@ -103,6 +106,22 @@ void ABlasterCharacter::PostInitializeComponents()
 	if (combat)
 	{
 		combat->character = this;
+	}
+}
+
+void ABlasterCharacter::playFireMontage(bool bAiming)
+{
+	if (combat == nullptr || combat->equippedWeapon == nullptr) return;
+
+	UAnimInstance* animInstance = GetMesh()->GetAnimInstance();
+	if (animInstance && fireWeaponMontage)
+	{
+		animInstance->Montage_Play(fireWeaponMontage);
+		FName sectionName;
+		sectionName = bAiming ? FName("RifleAim") : FName("RifleHip");
+		UE_LOG(LogTemp, Warning, TEXT("bAiming value is %s"), (bAiming ? TEXT("true") : TEXT("false")));
+		UE_LOG(LogTemp, Warning, TEXT("section Name is %s"), *sectionName.ToString());
+		animInstance->Montage_JumpToSection(sectionName);
 	}
 }
 
@@ -240,6 +259,22 @@ void ABlasterCharacter::Jump()
 {
 	//(possibily adding the  grappling hook mechanic)
 	Super::Jump();
+}
+
+void ABlasterCharacter::fireButtonPressed()
+{
+	if (combat)
+	{
+		combat->fireButtonPressed(true);
+	}
+}
+
+void ABlasterCharacter::fireButtonReleased()
+{
+	if (combat)
+	{
+		combat->fireButtonPressed(false);
+	}
 }
 
 void ABlasterCharacter::turnInPlace(float deltaTime)

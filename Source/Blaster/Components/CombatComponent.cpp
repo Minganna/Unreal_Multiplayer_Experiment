@@ -68,6 +68,15 @@ void UCombatComponent::onRep_EquippedWeapon()
 	}
 }
 
+void UCombatComponent::fireButtonPressed(bool bPressed)
+{
+	bFireButtonPressed = bPressed;
+	if (character && bFireButtonPressed)
+	{
+		character->playFireMontage(isAiming);
+	}
+}
+
 
 // Called every frame
 void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)

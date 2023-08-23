@@ -36,6 +36,9 @@ protected:
 	// function called when the equippedWeapon is replicated
 	UFUNCTION()
 	void onRep_EquippedWeapon();
+	
+	// function used to determine if the fire button has been pressed or released
+	void fireButtonPressed(bool bPressed);
 
 private: 
 	// pointer to the blaster character
@@ -52,6 +55,8 @@ private:
 	// used to set the speed while the character is aiming
 	UPROPERTY(EditAnywhere)
 	float aimWalkSpeed;
+	//boolean that keep track of when the fire button is pressed
+	bool bFireButtonPressed;
 
 public:	
 	

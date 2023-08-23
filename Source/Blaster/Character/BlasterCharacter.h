@@ -23,6 +23,8 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	// function called as soon as the components are initialised
 	virtual void PostInitializeComponents() override;
+	// function used to play the fire anim montage
+	void playFireMontage(bool bAiming);
 
 protected:
 	// Called when the game starts or when spawned
@@ -49,6 +51,10 @@ protected:
 	void aimOffset(float deltaTime);
 	//Add possibility to override the Jump function
 	virtual void Jump() override;
+	// function called when the fire button is pressed and the character should fire the weapon
+	void fireButtonPressed();
+	// function used when the fire button is released
+	void fireButtonReleased();
 
 private:
 	// class that allow the camera to follow the player
@@ -85,6 +91,10 @@ private:
 	ETurningInPlace turningInPlace;
 	// function used to determine if the character should turn in place base by the offset yaw
 	void turnInPlace(float deltaTime);
+
+	//pointer to the animation montage used to fire the weapon
+	UPROPERTY(EditAnywhere, Category = Combat)
+	class UAnimMontage* fireWeaponMontage;
 
 
 public:	
