@@ -40,6 +40,14 @@ protected:
 	// function used to determine if the fire button has been pressed or released
 	void fireButtonPressed(bool bPressed);
 
+	//server RPC call to inform the server that the character should fire
+	UFUNCTION(Server, Reliable)
+	void serverFire();
+
+	// function called to all clients from the server
+	UFUNCTION(NetMulticast, Reliable)
+	void multicastFire();
+
 private: 
 	// pointer to the blaster character
 	class ABlasterCharacter* character;

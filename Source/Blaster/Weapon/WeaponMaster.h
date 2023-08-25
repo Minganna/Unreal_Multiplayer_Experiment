@@ -34,6 +34,8 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	//function used to show/hide the pick up widget text
 	void showPickupWidget(bool bShowWidget);
+	// function called when the weapon is fired
+	void fire();
 
 protected:
 	// Called when the game starts or when spawned
@@ -64,6 +66,10 @@ private:
 	//funtion used to notify clients when state changes on server 
 	UFUNCTION()
 	void onRep_WeaponState();
+
+	//the weapon animation
+	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
+	class UAnimationAsset* fireAnimation;
 
 public:
 	//setter of the weapon state also used to set the necessary variables

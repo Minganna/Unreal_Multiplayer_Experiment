@@ -6,6 +6,8 @@
 #include "Components/WidgetComponent.h"
 #include "Blaster/Character/BlasterCharacter.h"
 #include "Net/UnrealNetwork.h"
+#include "Animation/AnimationAsset.h"
+#include "Components/SkeletalMeshComponent.h"
 
 // Sets default values
 AWeaponMaster::AWeaponMaster()
@@ -122,6 +124,14 @@ void AWeaponMaster::showPickupWidget(bool bShowWidget)
 	if (pickupWidget)
 	{
 		pickupWidget->SetVisibility(bShowWidget);
+	}
+}
+
+void AWeaponMaster::fire()
+{
+	if (fireAnimation)
+	{
+		weaponMesh->PlayAnimation(fireAnimation, false);
 	}
 }
 

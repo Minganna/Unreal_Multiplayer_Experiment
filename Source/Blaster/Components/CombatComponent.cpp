@@ -23,6 +23,13 @@ UCombatComponent::UCombatComponent()
 	// ...
 }
 
+void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(UCombatComponent, equippedWeapon);
+	DOREPLIFETIME(UCombatComponent, isAiming);
+}
 
 // Called when the game starts
 void UCombatComponent::BeginPlay()
@@ -71,11 +78,29 @@ void UCombatComponent::onRep_EquippedWeapon()
 void UCombatComponent::fireButtonPressed(bool bPressed)
 {
 	bFireButtonPressed = bPressed;
-	if (character && bFireButtonPressed)
+	if (bFireButtonPressed)
 	{
-		character->playFireMontage(isAiming);
+		serverFire();
 	}
 }
+
+void UCombatComponent::serverFire_Implementation()
+{
+	multicastFire();
+}
+
+void UCombatComponent::multicastFire_Implementation()
+{
+	if (equippedWeapon == nullptr) return;
+
+	if (character)
+	{
+		character->playFireMontage(isAiming);
+		equippedWeapon->fire();
+	}
+}
+
+
 
 
 // Called every frame
@@ -84,14 +109,6 @@ void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	// ...
-}
-
-void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-	DOREPLIFETIME(UCombatComponent, equippedWeapon);
-	DOREPLIFETIME(UCombatComponent, isAiming);
 }
 
 void UCombatComponent::equipWeapon(AWeaponMaster* weaponToequip)
