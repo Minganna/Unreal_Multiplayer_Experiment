@@ -13,5 +13,10 @@ UCLASS()
 class BLASTER_API AProjectileWeapon : public AWeaponMaster
 {
 	GENERATED_BODY()
-	
+
+public:
+	virtual void fire(const FVector& hitTarget) override;
+private:
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class AProjectile> projectileClass;
 };

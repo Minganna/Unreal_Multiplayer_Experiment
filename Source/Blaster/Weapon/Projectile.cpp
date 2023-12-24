@@ -3,12 +3,17 @@
 
 #include "Projectile.h"
 #include "Components/BoxComponent.h"
+#include "GameFramework/ProjectileMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "Particles/ParticleSystemComponent.h"
+#include "Particles/ParticleSystem.h"
 
 // Sets default values
 AProjectile::AProjectile()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+	bReplicates = true;
 	
 	collisionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("CollisionBox"));
 	SetRootComponent(collisionBox);
@@ -17,12 +22,25 @@ AProjectile::AProjectile()
 	collisionBox->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
 	collisionBox->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
 	collisionBox->SetCollisionResponseToChannel(ECollisionChannel::ECC_WorldStatic, ECollisionResponse::ECR_Block);
+
+	projectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovementComponent"));
+	projectileMovementComponent->bRotationFollowsVelocity = true;
+
 }
 
 // Called when the game starts or when spawned
 void AProjectile::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (tracer)
+	{
+		tracerComponent = UGameplayStatics::SpawnEmitterAttached(tracer, 
+																 collisionBox,FName(),
+																 GetActorLocation(),
+																 GetActorRotation(),
+																 EAttachLocation::KeepWorldPosition);
+	}
 	
 }
 

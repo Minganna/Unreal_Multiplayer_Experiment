@@ -6,6 +6,9 @@
 #include "Components/ActorComponent.h"
 #include "CombatComponent.generated.h"
 
+
+#define TRACE_LENGTH 80000.0f
+
 class AWeaponMaster;
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -48,6 +51,9 @@ protected:
 	UFUNCTION(NetMulticast, Reliable)
 	void multicastFire();
 
+	// fuction used to determine where the crosshair is using raytracing 
+	void traceUnderCrosshairs(FHitResult& traceHitResult);
+
 private: 
 	// pointer to the blaster character
 	class ABlasterCharacter* character;
@@ -65,6 +71,8 @@ private:
 	float aimWalkSpeed;
 	//boolean that keep track of when the fire button is pressed
 	bool bFireButtonPressed;
+	// position of the current target
+	FVector hitTarget;
 
 public:	
 	

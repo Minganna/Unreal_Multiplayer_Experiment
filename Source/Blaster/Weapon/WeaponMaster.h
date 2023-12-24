@@ -35,7 +35,7 @@ public:
 	//function used to show/hide the pick up widget text
 	void showPickupWidget(bool bShowWidget);
 	// function called when the weapon is fired
-	void fire();
+	virtual void fire(const FVector& hitTarget);
 
 protected:
 	// Called when the game starts or when spawned

@@ -25,6 +25,15 @@ private:
 	// the box collider for the projectile
 	UPROPERTY(EditAnywhere)
 	class UBoxComponent* collisionBox;
+	//class that handle the movement of the projectile
+	// to change bullet speed open bullet blueprint and change max and initial speed
+	UPROPERTY(VisibleAnywhere)
+	class UProjectileMovementComponent* projectileMovementComponent;
+	// the particle system that show the bullet moving
+	UPROPERTY(EditAnywhere)
+	class UParticleSystem* tracer;
+	// the effect spawned 
+	class UParticleSystemComponent* tracerComponent;
 
 public:	
 

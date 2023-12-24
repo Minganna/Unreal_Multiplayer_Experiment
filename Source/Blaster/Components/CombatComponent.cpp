@@ -8,6 +8,8 @@
 #include "Engine/SkeletalMeshSocket.h"
 #include "Components/SphereComponent.h"
 #include "Net/UnrealNetwork.h"
+#include "Kismet/GameplayStatics.h"
+#include "DrawDebugHelpers.h"
 
 
 // Sets default values for this component's properties
@@ -15,7 +17,7 @@ UCombatComponent::UCombatComponent()
 {
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
-	PrimaryComponentTick.bCanEverTick = false;
+	PrimaryComponentTick.bCanEverTick = true;
 
 	baseWalkSpeed = 600.0f;
 	aimWalkSpeed = 450.0f;
@@ -84,6 +86,39 @@ void UCombatComponent::fireButtonPressed(bool bPressed)
 	}
 }
 
+void UCombatComponent::traceUnderCrosshairs(FHitResult& traceHitResult)
+{
+	FVector2D vieportSize;
+	if (GEngine && GEngine->GameViewport)
+	{
+		GEngine->GameViewport->GetViewportSize(vieportSize);
+	}
+	FVector2D crosshairLocation(vieportSize.X/ 2.0f, vieportSize.Y/ 2.0f);
+	FVector crosshairWorldPosition;
+	FVector  crosshairWorlDirection;
+	bool bScreenToWorld = UGameplayStatics::DeprojectScreenToWorld(UGameplayStatics::GetPlayerController(this, 0), crosshairLocation, crosshairWorldPosition, crosshairWorlDirection);
+
+	if (bScreenToWorld)
+	{
+		FVector start = crosshairWorldPosition;
+
+		FVector end = start + crosshairWorlDirection * TRACE_LENGTH;
+
+		GetWorld()->LineTraceSingleByChannel(traceHitResult,start,end,ECollisionChannel::ECC_Visibility);
+
+		if (!traceHitResult.bBlockingHit)
+		{
+			traceHitResult.ImpactPoint = end;
+			hitTarget = end;
+		}
+		else
+		{
+			hitTarget = traceHitResult.ImpactPoint;
+			DrawDebugSphere(GetWorld(), traceHitResult.ImpactPoint, 12.0f, 12, FColor::Red);
+		}
+	}
+}
+
 void UCombatComponent::serverFire_Implementation()
 {
 	multicastFire();
@@ -96,7 +131,7 @@ void UCombatComponent::multicastFire_Implementation()
 	if (character)
 	{
 		character->playFireMontage(isAiming);
-		equippedWeapon->fire();
+		equippedWeapon->fire(hitTarget);
 	}
 }
 
@@ -108,7 +143,10 @@ void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	// ...
+	// debug code to be removed
+
+	FHitResult hitResult;
+	traceUnderCrosshairs(hitResult);
 }
 
 void UCombatComponent::equipWeapon(AWeaponMaster* weaponToequip)
