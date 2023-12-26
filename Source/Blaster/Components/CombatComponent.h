@@ -45,11 +45,11 @@ protected:
 
 	//server RPC call to inform the server that the character should fire
 	UFUNCTION(Server, Reliable)
-	void serverFire();
+	void serverFire(const FVector_NetQuantize& traceHitTarget);
 
 	// function called to all clients from the server
 	UFUNCTION(NetMulticast, Reliable)
-	void multicastFire();
+	void multicastFire(const FVector_NetQuantize& traceHitTarget);
 
 	// fuction used to determine where the crosshair is using raytracing 
 	void traceUnderCrosshairs(FHitResult& traceHitResult);
@@ -72,7 +72,7 @@ private:
 	//boolean that keep track of when the fire button is pressed
 	bool bFireButtonPressed;
 	// position of the current target
-	FVector hitTarget;
+	FVector_NetQuantize hitTarget;
 
 public:	
 	

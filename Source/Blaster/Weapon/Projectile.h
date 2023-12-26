@@ -16,10 +16,15 @@ public:
 	AProjectile();
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+	// Called when the gameObject is destroyed
+	virtual void Destroyed() override;
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	// Called when the projectile hit something
+	UFUNCTION()
+	virtual void onHit(UPrimitiveComponent* hitComp, AActor* otherActor, UPrimitiveComponent* otherComp, FVector normalImpulse, const FHitResult& hit);
 
 private:
 	// the box collider for the projectile
@@ -32,8 +37,14 @@ private:
 	// the particle system that show the bullet moving
 	UPROPERTY(EditAnywhere)
 	class UParticleSystem* tracer;
-	// the effect spawned 
+	// the effect spawned that act as a trail
 	class UParticleSystemComponent* tracerComponent;
+	// particles spawned when colliding
+	UPROPERTY(EditAnywhere)
+	UParticleSystem* inpactParticles;
+	// sound played when colliding
+	UPROPERTY(EditAnywhere)
+	class USoundCue* impactSound;
 
 public:	
 

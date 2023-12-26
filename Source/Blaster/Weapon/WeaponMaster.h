@@ -70,6 +70,9 @@ private:
 	//the weapon animation
 	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
 	class UAnimationAsset* fireAnimation;
+	// the bulletShell object mesh
+	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
+	TSubclassOf<class ACasing> casingClass;
 
 public:
 	//setter of the weapon state also used to set the necessary variables
