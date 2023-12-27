@@ -6,6 +6,10 @@
 #include "Components/WidgetComponent.h"
 #include "Blaster/Character/BlasterCharacter.h"
 #include "Net/UnrealNetwork.h"
+#include "Animation/AnimationAsset.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Casing.h"
+#include "Engine/SkeletalMeshSocket.h"
 
 // Sets default values
 AWeaponMaster::AWeaponMaster()
@@ -122,6 +126,29 @@ void AWeaponMaster::showPickupWidget(bool bShowWidget)
 	if (pickupWidget)
 	{
 		pickupWidget->SetVisibility(bShowWidget);
+	}
+}
+
+void AWeaponMaster::fire(const FVector& hitTarget)
+{
+	if (fireAnimation)
+	{
+		weaponMesh->PlayAnimation(fireAnimation, false);
+	}
+	if (casingClass)
+	{
+		// name need to be the same as the socket in the mesh of the weapon
+		const USkeletalMeshSocket* ammoEjectSocket = weaponMesh->GetSocketByName(FName("AmmoEject"));
+		if (ammoEjectSocket)
+		{
+			FTransform socketTransform = ammoEjectSocket->GetSocketTransform(weaponMesh);
+			UWorld* world = GetWorld();
+			FRotator RandomEjectRotation = FRotator(FMath::RandRange(-randRangeEject, randRangeEject), FMath::RandRange(-randRangeEject, randRangeEject), FMath::RandRange(-randRangeEject, randRangeEject));
+			if (world)
+			{
+				world->SpawnActor<ACasing>(casingClass, socketTransform.GetLocation(), socketTransform.GetRotation().Rotator() + RandomEjectRotation);
+			}
+		}
 	}
 }
 

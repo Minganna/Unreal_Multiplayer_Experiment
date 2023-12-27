@@ -6,6 +6,9 @@
 #include "Components/ActorComponent.h"
 #include "CombatComponent.generated.h"
 
+
+#define TRACE_LENGTH 80000.0f
+
 class AWeaponMaster;
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -36,6 +39,20 @@ protected:
 	// function called when the equippedWeapon is replicated
 	UFUNCTION()
 	void onRep_EquippedWeapon();
+	
+	// function used to determine if the fire button has been pressed or released
+	void fireButtonPressed(bool bPressed);
+
+	//server RPC call to inform the server that the character should fire
+	UFUNCTION(Server, Reliable)
+	void serverFire(const FVector_NetQuantize& traceHitTarget);
+
+	// function called to all clients from the server
+	UFUNCTION(NetMulticast, Reliable)
+	void multicastFire(const FVector_NetQuantize& traceHitTarget);
+
+	// fuction used to determine where the crosshair is using raytracing 
+	void traceUnderCrosshairs(FHitResult& traceHitResult);
 
 private: 
 	// pointer to the blaster character
@@ -52,6 +69,10 @@ private:
 	// used to set the speed while the character is aiming
 	UPROPERTY(EditAnywhere)
 	float aimWalkSpeed;
+	//boolean that keep track of when the fire button is pressed
+	bool bFireButtonPressed;
+	// position of the current target
+	FVector_NetQuantize hitTarget;
 
 public:	
 	
