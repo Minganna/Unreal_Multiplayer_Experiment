@@ -71,8 +71,11 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
 	class UAnimationAsset* fireAnimation;
 	// the bulletShell object mesh
-	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
+	UPROPERTY(EditAnywhere, Category = "Casing Properties")
 	TSubclassOf<class ACasing> casingClass;
+	// random value to add when spawning the casing
+	UPROPERTY(EditAnywhere, Category = "Casing Properties")
+	float randRangeEject=10.0f;
 
 public:
 	//setter of the weapon state also used to set the necessary variables

@@ -143,9 +143,10 @@ void AWeaponMaster::fire(const FVector& hitTarget)
 		{
 			FTransform socketTransform = ammoEjectSocket->GetSocketTransform(weaponMesh);
 			UWorld* world = GetWorld();
+			FRotator RandomEjectRotation = FRotator(FMath::RandRange(-randRangeEject, randRangeEject), FMath::RandRange(-randRangeEject, randRangeEject), FMath::RandRange(-randRangeEject, randRangeEject));
 			if (world)
 			{
-				world->SpawnActor<ACasing>(casingClass, socketTransform.GetLocation(), socketTransform.GetRotation().Rotator());
+				world->SpawnActor<ACasing>(casingClass, socketTransform.GetLocation(), socketTransform.GetRotation().Rotator() + RandomEjectRotation);
 			}
 		}
 	}
