@@ -36,6 +36,12 @@ public:
 	void showPickupWidget(bool bShowWidget);
 	// function called when the weapon is fired
 	virtual void fire(const FVector& hitTarget);
+	// getter for the textures for the weapon crosshairs
+	FORCEINLINE class UTexture2D* getCrosshairCenter() { return crosshairsCenter; }
+	FORCEINLINE UTexture2D* getCrosshairLeft() { return crosshairsLeft; }
+	FORCEINLINE UTexture2D* getCrosshairRight() { return crosshairsRight; }
+	FORCEINLINE UTexture2D* getCrosshairTop() { return crosshairsTop; }
+	FORCEINLINE UTexture2D* getCrosshairBottom() { return crosshairsBottom; }
 
 protected:
 	// Called when the game starts or when spawned
@@ -76,6 +82,19 @@ private:
 	// random value to add when spawning the casing
 	UPROPERTY(EditAnywhere, Category = "Casing Properties")
 	float randRangeEject=10.0f;
+
+	// Textures for the weapon crosshairs
+	UPROPERTY(EditAnywhere, Category = "Crosshair Properties")
+	UTexture2D* crosshairsCenter;
+	UPROPERTY(EditAnywhere, Category = "Crosshair Properties")
+	UTexture2D* crosshairsLeft;
+	UPROPERTY(EditAnywhere, Category = "Crosshair Properties")
+	UTexture2D* crosshairsRight;
+	UPROPERTY(EditAnywhere, Category = "Crosshair Properties")
+	UTexture2D* crosshairsTop;
+	UPROPERTY(EditAnywhere, Category = "Crosshair Properties")
+	UTexture2D* crosshairsBottom;
+
 
 public:
 	//setter of the weapon state also used to set the necessary variables

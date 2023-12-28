@@ -53,10 +53,16 @@ protected:
 
 	// fuction used to determine where the crosshair is using raytracing 
 	void traceUnderCrosshairs(FHitResult& traceHitResult);
+	// function used to set the crosshair texture based on the weapon the player is holding
+	void setHUDCrosshairs(float deltaTime);
 
 private: 
 	// pointer to the blaster character
 	class ABlasterCharacter* character;
+	// pointer to the blaster player controller
+	class ABlasterPlayerController* controller;
+	// pointer to the blaster hud
+	class ABlasterHUD* hud;
 	// pointer of the currently equipped weapon
 	UPROPERTY(ReplicatedUsing = onRep_EquippedWeapon)
 	AWeaponMaster* equippedWeapon;
@@ -74,6 +80,15 @@ private:
 	// position of the current target
 	FVector_NetQuantize hitTarget;
 
+	// hud and crosshairs values
+
+	// value that is used to decide the spread of the crosshair based on character movement velocity
+	float crosshairVelocityFactor{0.0f};
+	// value that is used to decide the spread of the crosshair based on whenever the character is in the air 
+	float crosshairInAirFactor{ 0.0f };
+	// used to change the speed which the crosshair should spread when falling
+	UPROPERTY(EditAnywhere)
+	float inAirInterp{ 2.25f };
 public:	
 	
 
