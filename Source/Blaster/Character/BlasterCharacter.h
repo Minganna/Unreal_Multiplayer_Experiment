@@ -112,4 +112,8 @@ public:
 	FORCEINLINE ETurningInPlace getTurningInPlace() const { return turningInPlace; }
 	//getter of the equipped weapon
 	AWeaponMaster* getEquippedWeapon();
+	//getter for the hitTarget
+	FVector getHitTarget() const;
+	//getter for the camera component
+	FORCEINLINE UCameraComponent* getFollowCamera() const { return mainCamera; }
 };

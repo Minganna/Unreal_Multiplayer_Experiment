@@ -36,12 +36,6 @@ public:
 	void showPickupWidget(bool bShowWidget);
 	// function called when the weapon is fired
 	virtual void fire(const FVector& hitTarget);
-	// getter for the textures for the weapon crosshairs
-	FORCEINLINE class UTexture2D* getCrosshairCenter() { return crosshairsCenter; }
-	FORCEINLINE UTexture2D* getCrosshairLeft() { return crosshairsLeft; }
-	FORCEINLINE UTexture2D* getCrosshairRight() { return crosshairsRight; }
-	FORCEINLINE UTexture2D* getCrosshairTop() { return crosshairsTop; }
-	FORCEINLINE UTexture2D* getCrosshairBottom() { return crosshairsBottom; }
 
 protected:
 	// Called when the game starts or when spawned
@@ -95,6 +89,14 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Crosshair Properties")
 	UTexture2D* crosshairsBottom;
 
+	// Zoomed field of view while aiming
+	// the default field of view when aiming
+	UPROPERTY(EditAnywhere, Category = "Zoom Properties")
+	float zoomedFOV{ 30.0f };
+	// the default speed which the weapon should zoom the field of view when aiming
+	UPROPERTY(EditAnywhere, Category = "Zoom Properties")
+	float zoomInterpSpeed{ 20.0f };
+
 
 public:
 	//setter of the weapon state also used to set the necessary variables
@@ -103,4 +105,15 @@ public:
 	FORCEINLINE USphereComponent* getAreaSphere() const { return areaSphere; }
 	// getter for the weapon mesh
 	FORCEINLINE USkeletalMeshComponent* getWeaponMesh() const { return weaponMesh; }
+
+	// getter for the textures for the weapon crosshairs
+	FORCEINLINE class UTexture2D* getCrosshairCenter() const { return crosshairsCenter; }
+	FORCEINLINE UTexture2D* getCrosshairLeft() const { return crosshairsLeft; }
+	FORCEINLINE UTexture2D* getCrosshairRight() const { return crosshairsRight; }
+	FORCEINLINE UTexture2D* getCrosshairTop() const { return crosshairsTop; }
+	FORCEINLINE UTexture2D* getCrosshairBottom() const { return crosshairsBottom; }
+	//getter for the zooming variables
+	FORCEINLINE float getZoomedFOV() const { return zoomedFOV; }
+	FORCEINLINE float getZoomInterpSpeed() const { return zoomInterpSpeed; }
+
 };

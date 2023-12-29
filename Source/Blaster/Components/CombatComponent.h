@@ -89,6 +89,21 @@ private:
 	// used to change the speed which the crosshair should spread when falling
 	UPROPERTY(EditAnywhere)
 	float inAirInterp{ 2.25f };
+
+	//aiming and field of view
+
+	// field of view when not aiming, set to the camera's base field of view in BeginPlay
+	float defaultFOV{ 0 };
+	// the default field of view when aiming
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	float zoomedFOV{ 30.0f }; 
+	//the current field of view assigned to the player
+	float currentFOV{ 0 };
+	// the default speed which the weapon should zoom the field of view when aiming
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	float zoomInterpSpeed{ 20.0f };
+
+	void interpFOV(float deltaTime);
 public:	
 	
 
