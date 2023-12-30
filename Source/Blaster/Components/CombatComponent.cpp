@@ -11,7 +11,6 @@
 #include "Kismet/GameplayStatics.h"
 #include "DrawDebugHelpers.h"
 #include "Blaster/PlayerController/BlasterPlayerController.h"
-#include "Blaster/HUD/BlasterHUD.h"
 #include "Camera/CameraComponent.h"
 
 
@@ -83,7 +82,6 @@ void UCombatComponent::setHUDCrosshairs(float deltaTime)
 		hud= hud == nullptr ? Cast<ABlasterHUD>(controller->GetHUD()) : hud;
 		if (hud)
 		{
-			FHUDPackage hudPackage;
 			hudPackage.crosshairsCenter = nullptr;
 			hudPackage.crosshairsLeft = nullptr;
 			hudPackage.crosshairsRight = nullptr;
@@ -112,18 +110,33 @@ void UCombatComponent::setHUDCrosshairs(float deltaTime)
 			//clamp player velocity to [0-1]
 			crosshairVelocityFactor = FMath::GetMappedRangeValueClamped(walkSpeedRange, velocityMultiplierRange, velocity.Size());
 			
+			const float zeroValue{ 0.0f };
+			const float shrinkSpreadSpeed{ 30.0f };
 			if (character->GetCharacterMovement()->IsFalling())
 			{
 				crosshairInAirFactor = FMath::FInterpTo(crosshairInAirFactor, inAirInterp,deltaTime, inAirInterp);
 			}
 			else
 			{
-				float zeroValue{ 0.0f };
-				float spreadSpeedOnHittingGround{ 30.0f };
-				crosshairInAirFactor = FMath::FInterpTo(crosshairInAirFactor, zeroValue, deltaTime, spreadSpeedOnHittingGround);
+				crosshairInAirFactor = FMath::FInterpTo(crosshairInAirFactor, zeroValue, deltaTime, shrinkSpreadSpeed);
 			}
-
-			hudPackage.crosshairSpread = crosshairVelocityFactor+ crosshairInAirFactor;
+			if (isAiming)
+			{
+				const float shrinkingValue{0.58f};
+				crosshairAimFactor = FMath::FInterpTo(crosshairAimFactor, shrinkingValue, deltaTime, shrinkSpreadSpeed);
+			}
+			else
+			{
+				crosshairAimFactor = FMath::FInterpTo(crosshairInAirFactor, zeroValue, deltaTime, shrinkSpreadSpeed);
+			}
+			//reset the spread when shooting back to zero
+			crosshairShootingFactor = FMath::FInterpTo(crosshairShootingFactor, zeroValue, deltaTime, shrinkSpreadSpeed);
+			const float minimumSpread{ 0.5f };
+			hudPackage.crosshairSpread = minimumSpread +
+					   crosshairVelocityFactor + 
+				       crosshairInAirFactor -
+					   crosshairAimFactor +
+					   crosshairShootingFactor;
 			hud->setHudPackage(hudPackage);
 
 		}
@@ -186,6 +199,13 @@ void UCombatComponent::fireButtonPressed(bool bPressed)
 		FHitResult hitResult;
 		traceUnderCrosshairs(hitResult);
 		serverFire(hitTarget);
+
+		if (equippedWeapon)
+		{
+			// spread the crosshair when shooting
+			const float shootingSpread{0.75f};
+			crosshairShootingFactor = shootingSpread;
+		}
 	}
 }
 
@@ -205,6 +225,12 @@ void UCombatComponent::traceUnderCrosshairs(FHitResult& traceHitResult)
 	{
 		FVector start = crosshairWorldPosition;
 
+		if (character)
+		{
+			float distanceToCharacter = (character->GetActorLocation() - start).Size();
+			float offsetFrontOfCharacter{ 5.0f };
+			start += crosshairWorlDirection * (distanceToCharacter + offsetFrontOfCharacter);
+		}
 		FVector end = start + crosshairWorlDirection * TRACE_LENGTH;
 
 		GetWorld()->LineTraceSingleByChannel(traceHitResult,start,end,ECollisionChannel::ECC_Visibility);
@@ -217,6 +243,15 @@ void UCombatComponent::traceUnderCrosshairs(FHitResult& traceHitResult)
 		else
 		{
 			hitTarget = traceHitResult.ImpactPoint;
+		}
+		// check if the hit result has the interface
+		if (traceHitResult.GetActor() && traceHitResult.GetActor()->Implements<UCrosshairInteractionInterface>())
+		{
+			hudPackage.crosshairColor = FLinearColor::Red;
+		}
+		else
+		{
+			hudPackage.crosshairColor = FLinearColor::White;
 		}
 	}
 }

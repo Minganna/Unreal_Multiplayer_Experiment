@@ -5,10 +5,11 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Blaster/Types/TurningInPlace.h"
+#include "Blaster/Interfaces/CrosshairInteractionInterface.h"
 #include "BlasterCharacter.generated.h"
 
 UCLASS()
-class BLASTER_API ABlasterCharacter : public ACharacter
+class BLASTER_API ABlasterCharacter : public ACharacter, public ICrosshairInteractionInterface
 {
 	GENERATED_BODY()
 
@@ -95,6 +96,11 @@ private:
 	//pointer to the animation montage used to fire the weapon
 	UPROPERTY(EditAnywhere, Category = Combat)
 	class UAnimMontage* fireWeaponMontage;
+	//function used to not render the character if it is too close to the camera
+	void hideCameraIfCharacterClose();
+	// the threshold used to define if the character is too close
+	UPROPERTY(EditAnywhere)
+	float cameraThreshold{ 200.0f };
 
 
 public:	

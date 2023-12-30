@@ -19,6 +19,7 @@ public:
 	UTexture2D* crosshairsTop;
 	UTexture2D* crosshairsBottom;
 	float crosshairSpread{0};
+	FLinearColor crosshairColor{ FLinearColor::White};
 };
 
 /**
@@ -36,7 +37,7 @@ private:
 	// reference to the struct that keep track of the crosshairs
 	FHUDPackage hudPackage;
 	// function used to draw the current crosshair
-	void drawCrosshair(UTexture2D* texture, FVector2D viewportCenter,FVector2D spread);
+	void drawCrosshair(UTexture2D* texture, FVector2D viewportCenter,FVector2D spread, FLinearColor crosshairColor);
 	// the max spread of the crosshairs
 	UPROPERTY(EditAnywhere)
 	float crosshairSpreadMax = 16.0f;

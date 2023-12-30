@@ -42,6 +42,8 @@ ABlasterCharacter::ABlasterCharacter()
 	// avoid the collision with the camera
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
 	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
+	//change visibility channel to ensure the character can be aimed
+	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
 	//set the rotation yaw to a higher value to reduce the time spent on the character rotating
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 0.0f, 850.0f);
 
@@ -72,6 +74,7 @@ void ABlasterCharacter::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	aimOffset(DeltaTime);
+	hideCameraIfCharacterClose();
 
 }
 
@@ -317,6 +320,28 @@ void ABlasterCharacter::serverEquipButtonPress_Implementation()
 	if (combat)
 	{
 		combat->equipWeapon(overlappingWeapon);
+	}
+}
+
+void ABlasterCharacter::hideCameraIfCharacterClose()
+{
+	if (!IsLocallyControlled()) return;
+
+	if ((mainCamera->GetComponentLocation() - GetActorLocation()).Size() < cameraThreshold)
+	{
+		GetMesh()->SetVisibility(false);
+		if (combat && combat->equippedWeapon && combat->equippedWeapon->getWeaponMesh())
+		{
+			combat->equippedWeapon->getWeaponMesh()->bOwnerNoSee = true;
+		}
+	}
+	else
+	{
+		GetMesh()->SetVisibility(true);
+		if (combat && combat->equippedWeapon && combat->equippedWeapon->getWeaponMesh())
+		{
+			combat->equippedWeapon->getWeaponMesh()->bOwnerNoSee = false;
+		}
 	}
 }
 

@@ -19,34 +19,34 @@ void ABlasterHUD::DrawHUD()
 		if (hudPackage.crosshairsCenter)
 		{
 			FVector2D spread(0.0f, 0.0f);
-			drawCrosshair(hudPackage.crosshairsCenter, vieportCenter, spread);
+			drawCrosshair(hudPackage.crosshairsCenter, vieportCenter, spread,hudPackage.crosshairColor);
 		}
 		if (hudPackage.crosshairsLeft)
 		{
 			FVector2D spread(-spreadScaled, 0.0f);
-			drawCrosshair(hudPackage.crosshairsLeft, vieportCenter,spread);
+			drawCrosshair(hudPackage.crosshairsLeft, vieportCenter,spread,hudPackage.crosshairColor);
 		}
 		if (hudPackage.crosshairsRight)
 		{
 			FVector2D spread(spreadScaled, 0.0f);
-			drawCrosshair(hudPackage.crosshairsRight, vieportCenter, spread);
+			drawCrosshair(hudPackage.crosshairsRight, vieportCenter, spread, hudPackage.crosshairColor);
 		}
 		if (hudPackage.crosshairsTop)
 		{
 			FVector2D spread(0.0f, -spreadScaled);
-			drawCrosshair(hudPackage.crosshairsTop, vieportCenter, spread);
+			drawCrosshair(hudPackage.crosshairsTop, vieportCenter, spread, hudPackage.crosshairColor);
 		}
 		if (hudPackage.crosshairsBottom)
 		{
 			FVector2D spread(0.0f, spreadScaled);
-			drawCrosshair(hudPackage.crosshairsBottom, vieportCenter,spread);
+			drawCrosshair(hudPackage.crosshairsBottom, vieportCenter,spread, hudPackage.crosshairColor);
 		}
 
 	}
 
 }
 
-void ABlasterHUD::drawCrosshair(UTexture2D* texture, FVector2D viewportCenter, FVector2D spread)
+void ABlasterHUD::drawCrosshair(UTexture2D* texture, FVector2D viewportCenter, FVector2D spread, FLinearColor crosshairColor)
 {
 	
 	const float textureWidth = texture->GetSizeX();
@@ -54,5 +54,5 @@ void ABlasterHUD::drawCrosshair(UTexture2D* texture, FVector2D viewportCenter, F
 	// ensure the texture is centered, otherwise there would be an offset due to pixel 0 been the top right corner
 	const FVector2D textureDrawPoint(viewportCenter.X - (textureWidth / 2) + spread.X, viewportCenter.Y - (textureHeight / 2)+ spread.Y);
 
-	DrawTexture(texture, textureDrawPoint.X, textureDrawPoint.Y, textureWidth, textureHeight,0.0f,0.0f,1.0f,1.0f,FLinearColor::White);
+	DrawTexture(texture, textureDrawPoint.X, textureDrawPoint.Y, textureWidth, textureHeight,0.0f,0.0f,1.0f,1.0f, crosshairColor);
 }

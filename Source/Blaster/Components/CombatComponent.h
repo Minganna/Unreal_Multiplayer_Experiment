@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Blaster/HUD/BlasterHUD.h"
 #include "CombatComponent.generated.h"
 
 
@@ -68,15 +69,15 @@ private:
 	AWeaponMaster* equippedWeapon;
 	// boolean used to check if the character is aiming
 	UPROPERTY(Replicated)
-	bool isAiming;
+	bool isAiming{ false };
 	// used to set the speed while the character is not aiming
 	UPROPERTY(EditAnywhere)
-	float baseWalkSpeed;
+	float baseWalkSpeed{ 0.0f };
 	// used to set the speed while the character is aiming
 	UPROPERTY(EditAnywhere)
-	float aimWalkSpeed;
+	float aimWalkSpeed{ 0.0f };
 	//boolean that keep track of when the fire button is pressed
-	bool bFireButtonPressed;
+	bool bFireButtonPressed{ false };
 	// position of the current target
 	FVector_NetQuantize hitTarget;
 
@@ -86,9 +87,16 @@ private:
 	float crosshairVelocityFactor{0.0f};
 	// value that is used to decide the spread of the crosshair based on whenever the character is in the air 
 	float crosshairInAirFactor{ 0.0f };
+	// value that is used to decide the shrink of the crosshair based on whenever the character is in aiming 
+	float crosshairAimFactor{ 0.0f };
+	//value that is used to decide the shrink/spread of the crosshair based on whenever the character is in shooting
+	float crosshairShootingFactor{ 0.0f };
 	// used to change the speed which the crosshair should spread when falling
 	UPROPERTY(EditAnywhere)
 	float inAirInterp{ 2.25f };
+	// the pachage that contain all the crosshair informations
+	FHUDPackage hudPackage;
+
 
 	//aiming and field of view
 

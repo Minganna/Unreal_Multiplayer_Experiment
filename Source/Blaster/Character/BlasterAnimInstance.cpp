@@ -74,7 +74,9 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float deltaTime)
 			bLocallyController = true;
 			//ensure the weapon is pointing where the character is aiming
 			FTransform handTransform = blasterCharacter->GetMesh()->GetSocketTransform(FName("Hand_R"), ERelativeTransformSpace::RTS_World);
-			rightHandRotation = UKismetMathLibrary::FindLookAtRotation(handTransform.GetLocation(), handTransform.GetLocation() + (handTransform.GetLocation() - blasterCharacter->getHitTarget()));
+			FRotator lookAtRotation = UKismetMathLibrary::FindLookAtRotation(handTransform.GetLocation(), handTransform.GetLocation() + (handTransform.GetLocation() - blasterCharacter->getHitTarget()));
+			const float interpTime{ 30.0f };
+			rightHandRotation = FMath::RInterpTo(rightHandRotation,lookAtRotation,deltaTime, interpTime);
 		}
 		
 	}
