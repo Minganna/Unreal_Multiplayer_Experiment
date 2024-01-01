@@ -91,9 +91,13 @@ private:
 	float crosshairAimFactor{ 0.0f };
 	//value that is used to decide the shrink/spread of the crosshair based on whenever the character is in shooting
 	float crosshairShootingFactor{ 0.0f };
+	//value that is used to decide the shrink of the crosshair based on whenever the character is aiming an actor that can be shoot
+	float crosshairAimingShootableActorFactor{ 0.0f };
 	// used to change the speed which the crosshair should spread when falling
 	UPROPERTY(EditAnywhere)
 	float inAirInterp{ 2.25f };
+	// used to change how much the crosshair spread/shrink when aiming to a shootable character
+	float currentAimingTargetSpread{ 0.0f };
 	// the pachage that contain all the crosshair informations
 	FHUDPackage hudPackage;
 

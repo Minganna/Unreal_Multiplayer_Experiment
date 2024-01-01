@@ -24,8 +24,17 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	// function called as soon as the components are initialised
 	virtual void PostInitializeComponents() override;
+
+	//play animation montages
+	// 
 	// function used to play the fire anim montage
 	void playFireMontage(bool bAiming);
+	// ensure the hit reaction animation montage is played on each machines
+	UFUNCTION(NetMulticast,Unreliable)
+	void multicastHit();
+	// used to ensure simulated proxy can see the character turn correctly
+	virtual void OnRep_ReplicatedMovement() override;
+
 
 protected:
 	// Called when the game starts or when spawned
@@ -50,12 +59,20 @@ protected:
 	void aimButtonReleased();
 	// function used to calculate the yaw and pitch offset
 	void aimOffset(float deltaTime);
+	// function used to calculate the pitch of the top part of the character body
+	void calculateAO_Pitch();
+	// function used to ensure that the simulated proxy can see the character turn without gittering
+	void simProxyTurn();
 	//Add possibility to override the Jump function
 	virtual void Jump() override;
 	// function called when the fire button is pressed and the character should fire the weapon
 	void fireButtonPressed();
 	// function used when the fire button is released
 	void fireButtonReleased();
+
+	//play animation montages
+	// function used to play the animation montage used when the character gets hit
+	void playHitReactMontage();
 
 private:
 	// class that allow the camera to follow the player
@@ -92,16 +109,37 @@ private:
 	ETurningInPlace turningInPlace;
 	// function used to determine if the character should turn in place base by the offset yaw
 	void turnInPlace(float deltaTime);
+	// function used to calculate the character speed
+	float calculateSpeed();
 
-	//pointer to the animation montage used to fire the weapon
-	UPROPERTY(EditAnywhere, Category = Combat)
-	class UAnimMontage* fireWeaponMontage;
 	//function used to not render the character if it is too close to the camera
 	void hideCameraIfCharacterClose();
 	// the threshold used to define if the character is too close
 	UPROPERTY(EditAnywhere)
 	float cameraThreshold{ 200.0f };
 
+
+	//animation montages
+
+	//pointer to the animation montage used to fire the weapon
+	UPROPERTY(EditAnywhere, Category = Combat)
+	class UAnimMontage* fireWeaponMontage;
+	//pointer to the animation montage used when the character gets hit
+	UPROPERTY(EditAnywhere, Category = Combat)
+	class UAnimMontage* hitReactMontage;
+
+	//simulated proxy logic
+
+	// rotators and float used to calculate how much the proxy character rotated in the last frame
+	FRotator proxyRotationLastFrame{};
+	FRotator proxyRotation{};
+	float proxyYaw{};
+	//float used to keep track when was the last time that OnRep_ReplicatedMovement() was called
+	float timeSinceLastMovementReplication{ 0.0f };
+	//bool that is used to determine whenever or not the root bone should be rotated in simulated proxy
+	bool bRotateRootBone{ false };
+	// used to determine in simulated proxy when the character should turn the root bone
+	float turnTreshold{ 0.5f };
 
 public:	
 	// setter for overlappingWeapon variable
@@ -122,4 +160,6 @@ public:
 	FVector getHitTarget() const;
 	//getter for the camera component
 	FORCEINLINE UCameraComponent* getFollowCamera() const { return mainCamera; }
+	//getter for bRotateRootBone
+	FORCEINLINE bool shouldRotateRootBone() const { return bRotateRootBone; }
 };

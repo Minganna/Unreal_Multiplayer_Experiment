@@ -91,6 +91,9 @@ private:
 	// boolean that keep track if the character is currently locally controlled
 	UPROPERTY(BlueprintReadOnly, Category = "Movement", meta = (AllowPrivateAccess = "true"))
 	bool bLocallyController{ false };
+	// boolean that keep track if the animation blueprint should rotate the root bone
+	UPROPERTY(BlueprintReadOnly, Category = "Movement", meta = (AllowPrivateAccess = "true"))
+	bool bRotateRootBone;
 
 
 };

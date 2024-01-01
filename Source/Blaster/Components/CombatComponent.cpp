@@ -131,11 +131,13 @@ void UCombatComponent::setHUDCrosshairs(float deltaTime)
 			}
 			//reset the spread when shooting back to zero
 			crosshairShootingFactor = FMath::FInterpTo(crosshairShootingFactor, zeroValue, deltaTime, shrinkSpreadSpeed);
+			crosshairAimingShootableActorFactor= FMath::FInterpTo(crosshairAimingShootableActorFactor, currentAimingTargetSpread, deltaTime, shrinkSpreadSpeed);
 			const float minimumSpread{ 0.5f };
 			hudPackage.crosshairSpread = minimumSpread +
 					   crosshairVelocityFactor + 
 				       crosshairInAirFactor -
-					   crosshairAimFactor +
+					   crosshairAimFactor -
+					   crosshairAimingShootableActorFactor +
 					   crosshairShootingFactor;
 			hud->setHudPackage(hudPackage);
 
@@ -248,10 +250,21 @@ void UCombatComponent::traceUnderCrosshairs(FHitResult& traceHitResult)
 		if (traceHitResult.GetActor() && traceHitResult.GetActor()->Implements<UCrosshairInteractionInterface>())
 		{
 			hudPackage.crosshairColor = FLinearColor::Red;
+			if (isAiming)
+			{
+
+				currentAimingTargetSpread = crosshairShootingFactor + 0.10f;
+			}
+			else
+			{
+				currentAimingTargetSpread = crosshairShootingFactor + 0.50f;
+			}
+			
 		}
 		else
 		{
 			hudPackage.crosshairColor = FLinearColor::White;
+			currentAimingTargetSpread = 0.0f;
 		}
 	}
 }
