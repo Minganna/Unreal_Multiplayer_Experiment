@@ -12,6 +12,7 @@
 #include "DrawDebugHelpers.h"
 #include "Blaster/PlayerController/BlasterPlayerController.h"
 #include "Camera/CameraComponent.h"
+#include "TimerManager.h"
 
 
 // Sets default values for this component's properties
@@ -35,7 +36,6 @@ void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME(UCombatComponent, isAiming);
 }
 
-// Called when the game starts
 void UCombatComponent::BeginPlay()
 {
 	Super::BeginPlay();
@@ -55,111 +55,76 @@ void UCombatComponent::BeginPlay()
 	
 }
 
-// Called every frame
 void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	if (character && character->IsLocallyControlled())
 	{
-		setHUDCrosshairs(DeltaTime);
 		FHitResult hitResult;
 		traceUnderCrosshairs(hitResult);
 		hitTarget = hitResult.ImpactPoint;
 
+		setHUDCrosshairs(DeltaTime);
 		interpFOV(DeltaTime);
 	}
 
 }
 
-void UCombatComponent::setHUDCrosshairs(float deltaTime)
+void UCombatComponent::fireButtonPressed(bool bPressed)
 {
-	if (character == nullptr || character->Controller==nullptr) return;
-
-	controller = controller == nullptr ? Cast<ABlasterPlayerController>(character->Controller) : controller;
-	if (controller)
+	bFireButtonPressed = bPressed;
+	if (bFireButtonPressed)
 	{
-		hud= hud == nullptr ? Cast<ABlasterHUD>(controller->GetHUD()) : hud;
-		if (hud)
-		{
-			hudPackage.crosshairsCenter = nullptr;
-			hudPackage.crosshairsLeft = nullptr;
-			hudPackage.crosshairsRight = nullptr;
-			hudPackage.crosshairsBottom = nullptr;
-			hudPackage.crosshairsTop = nullptr;
-			if (equippedWeapon)
-			{
-				hudPackage.crosshairsCenter = equippedWeapon->getCrosshairCenter();
-				hudPackage.crosshairsLeft = equippedWeapon->getCrosshairLeft();
-				hudPackage.crosshairsRight = equippedWeapon->getCrosshairRight();
-				hudPackage.crosshairsBottom = equippedWeapon->getCrosshairBottom();
-				hudPackage.crosshairsTop = equippedWeapon->getCrosshairTop();
-
-			}
-
-			//calculate the crosshair spread
-			FVector2D walkSpeedRange(0.0f, character->GetCharacterMovement()->MaxWalkSpeed);
-			if (character->bIsCrouched)
-			{
-				walkSpeedRange = FVector2D(0.0f, character->GetCharacterMovement()->MaxWalkSpeedCrouched);
-			}
-			
-			FVector2D velocityMultiplierRange(0.0f, 1.0f);
-			FVector velocity = character->GetVelocity();
-			velocity.Z = 0.0f;
-			//clamp player velocity to [0-1]
-			crosshairVelocityFactor = FMath::GetMappedRangeValueClamped(walkSpeedRange, velocityMultiplierRange, velocity.Size());
-			
-			const float zeroValue{ 0.0f };
-			const float shrinkSpreadSpeed{ 30.0f };
-			if (character->GetCharacterMovement()->IsFalling())
-			{
-				crosshairInAirFactor = FMath::FInterpTo(crosshairInAirFactor, inAirInterp,deltaTime, inAirInterp);
-			}
-			else
-			{
-				crosshairInAirFactor = FMath::FInterpTo(crosshairInAirFactor, zeroValue, deltaTime, shrinkSpreadSpeed);
-			}
-			if (isAiming)
-			{
-				const float shrinkingValue{0.58f};
-				crosshairAimFactor = FMath::FInterpTo(crosshairAimFactor, shrinkingValue, deltaTime, shrinkSpreadSpeed);
-			}
-			else
-			{
-				crosshairAimFactor = FMath::FInterpTo(crosshairInAirFactor, zeroValue, deltaTime, shrinkSpreadSpeed);
-			}
-			//reset the spread when shooting back to zero
-			crosshairShootingFactor = FMath::FInterpTo(crosshairShootingFactor, zeroValue, deltaTime, shrinkSpreadSpeed);
-			crosshairAimingShootableActorFactor= FMath::FInterpTo(crosshairAimingShootableActorFactor, currentAimingTargetSpread, deltaTime, shrinkSpreadSpeed);
-			const float minimumSpread{ 0.5f };
-			hudPackage.crosshairSpread = minimumSpread +
-					   crosshairVelocityFactor + 
-				       crosshairInAirFactor -
-					   crosshairAimFactor -
-					   crosshairAimingShootableActorFactor +
-					   crosshairShootingFactor;
-			hud->setHudPackage(hudPackage);
-
-		}
+		fire();
 	}
 }
 
-void UCombatComponent::interpFOV(float deltaTime)
+void UCombatComponent::fire()
+{
+	if (bCanFire)
+	{
+		serverFire(hitTarget);
+		if (equippedWeapon)
+		{
+			// spread the crosshair when shooting
+			const float shootingSpread{ 0.75f };
+			crosshairShootingFactor = shootingSpread;
+		}
+		startFireTimer();
+	}
+}
+
+void UCombatComponent::serverFire_Implementation(const FVector_NetQuantize& traceHitTarget)
+{
+	multicastFire(traceHitTarget);
+}
+
+void UCombatComponent::multicastFire_Implementation(const FVector_NetQuantize& traceHitTarget)
 {
 	if (equippedWeapon == nullptr) return;
 
-	if (isAiming)
+	if (character)
 	{
-		currentFOV = FMath::FInterpTo(currentFOV,equippedWeapon->getZoomedFOV(),deltaTime,equippedWeapon->getZoomInterpSpeed());
+		character->playFireMontage(isAiming);
+		equippedWeapon->fire(traceHitTarget);
 	}
-	else
+}
+
+void UCombatComponent::startFireTimer()
+{
+	if (equippedWeapon == nullptr || character == nullptr) return;
+	bCanFire = false;
+	character->GetWorldTimerManager().SetTimer(fireTimer, this, &UCombatComponent::fireTimerFinished, equippedWeapon->fireDelay);
+}
+
+void UCombatComponent::fireTimerFinished()
+{
+	if (equippedWeapon == nullptr) return;
+	bCanFire = true;
+	if (bFireButtonPressed && equippedWeapon->bIsAutomatic)
 	{
-		currentFOV = FMath::FInterpTo(currentFOV, defaultFOV, deltaTime, zoomInterpSpeed);
-	}
-	if (character && character->getFollowCamera())
-	{
-		character->getFollowCamera()->SetFieldOfView(currentFOV);
+		fire();
 	}
 }
 
@@ -193,22 +158,23 @@ void UCombatComponent::onRep_EquippedWeapon()
 	}
 }
 
-void UCombatComponent::fireButtonPressed(bool bPressed)
+void UCombatComponent::equipWeapon(AWeaponMaster* weaponToequip)
 {
-	bFireButtonPressed = bPressed;
-	if (bFireButtonPressed)
-	{
-		FHitResult hitResult;
-		traceUnderCrosshairs(hitResult);
-		serverFire(hitTarget);
+	if (character == nullptr || weaponToequip == nullptr) return;
 
-		if (equippedWeapon)
-		{
-			// spread the crosshair when shooting
-			const float shootingSpread{0.75f};
-			crosshairShootingFactor = shootingSpread;
-		}
+	equippedWeapon = weaponToequip;
+	equippedWeapon->setWeaponState(EWeaponState::EWS_Equipped);
+	// this only works if a socket has been created on the character skeleton, to do so open the skeleton, right click on the right hand bone and add socket
+	// once the socket is created, rename it with a relevant name that need to be the same as the one used in this function (you might also want to rotate and reposition the socket to make the weapon look inside the character hand)
+	// right click on the socket, add preview asset to simplify the step above
+	const USkeletalMeshSocket* handSocket= character->GetMesh()->GetSocketByName(FName("rightHandSocket"));
+	if (handSocket)
+	{
+		handSocket->AttachActor(equippedWeapon,character->GetMesh());
 	}
+	equippedWeapon->SetOwner(character);
+	character->GetCharacterMovement()->bOrientRotationToMovement = false;
+	character->bUseControllerRotationYaw = true;
 }
 
 void UCombatComponent::traceUnderCrosshairs(FHitResult& traceHitResult)
@@ -218,7 +184,7 @@ void UCombatComponent::traceUnderCrosshairs(FHitResult& traceHitResult)
 	{
 		GEngine->GameViewport->GetViewportSize(vieportSize);
 	}
-	FVector2D crosshairLocation(vieportSize.X/ 2.0f, vieportSize.Y/ 2.0f);
+	FVector2D crosshairLocation(vieportSize.X / 2.0f, vieportSize.Y / 2.0f);
 	FVector crosshairWorldPosition;
 	FVector  crosshairWorlDirection;
 	bool bScreenToWorld = UGameplayStatics::DeprojectScreenToWorld(UGameplayStatics::GetPlayerController(this, 0), crosshairLocation, crosshairWorldPosition, crosshairWorlDirection);
@@ -235,7 +201,7 @@ void UCombatComponent::traceUnderCrosshairs(FHitResult& traceHitResult)
 		}
 		FVector end = start + crosshairWorlDirection * TRACE_LENGTH;
 
-		GetWorld()->LineTraceSingleByChannel(traceHitResult,start,end,ECollisionChannel::ECC_Visibility);
+		GetWorld()->LineTraceSingleByChannel(traceHitResult, start, end, ECollisionChannel::ECC_Visibility);
 
 		if (!traceHitResult.bBlockingHit)
 		{
@@ -259,7 +225,7 @@ void UCombatComponent::traceUnderCrosshairs(FHitResult& traceHitResult)
 			{
 				currentAimingTargetSpread = crosshairShootingFactor + 0.50f;
 			}
-			
+
 		}
 		else
 		{
@@ -269,40 +235,93 @@ void UCombatComponent::traceUnderCrosshairs(FHitResult& traceHitResult)
 	}
 }
 
-
-
-void UCombatComponent::serverFire_Implementation(const FVector_NetQuantize& traceHitTarget)
+void UCombatComponent::setHUDCrosshairs(float deltaTime)
 {
-	multicastFire(traceHitTarget);
+	if (character == nullptr || character->Controller == nullptr) return;
+
+	controller = controller == nullptr ? Cast<ABlasterPlayerController>(character->Controller) : controller;
+	if (controller)
+	{
+		hud = hud == nullptr ? Cast<ABlasterHUD>(controller->GetHUD()) : hud;
+		if (hud)
+		{
+			hudPackage.crosshairsCenter = nullptr;
+			hudPackage.crosshairsLeft = nullptr;
+			hudPackage.crosshairsRight = nullptr;
+			hudPackage.crosshairsBottom = nullptr;
+			hudPackage.crosshairsTop = nullptr;
+			if (equippedWeapon)
+			{
+				hudPackage.crosshairsCenter = equippedWeapon->getCrosshairCenter();
+				hudPackage.crosshairsLeft = equippedWeapon->getCrosshairLeft();
+				hudPackage.crosshairsRight = equippedWeapon->getCrosshairRight();
+				hudPackage.crosshairsBottom = equippedWeapon->getCrosshairBottom();
+				hudPackage.crosshairsTop = equippedWeapon->getCrosshairTop();
+
+			}
+
+			//calculate the crosshair spread
+			FVector2D walkSpeedRange(0.0f, character->GetCharacterMovement()->MaxWalkSpeed);
+			if (character->bIsCrouched)
+			{
+				walkSpeedRange = FVector2D(0.0f, character->GetCharacterMovement()->MaxWalkSpeedCrouched);
+			}
+
+			FVector2D velocityMultiplierRange(0.0f, 1.0f);
+			FVector velocity = character->GetVelocity();
+			velocity.Z = 0.0f;
+			//clamp player velocity to [0-1]
+			crosshairVelocityFactor = FMath::GetMappedRangeValueClamped(walkSpeedRange, velocityMultiplierRange, velocity.Size());
+
+			const float zeroValue{ 0.0f };
+			const float shrinkSpreadSpeed{ 30.0f };
+			if (character->GetCharacterMovement()->IsFalling())
+			{
+				crosshairInAirFactor = FMath::FInterpTo(crosshairInAirFactor, inAirInterp, deltaTime, inAirInterp);
+			}
+			else
+			{
+				crosshairInAirFactor = FMath::FInterpTo(crosshairInAirFactor, zeroValue, deltaTime, shrinkSpreadSpeed);
+			}
+			if (isAiming)
+			{
+				const float shrinkingValue{ 0.58f };
+				crosshairAimFactor = FMath::FInterpTo(crosshairAimFactor, shrinkingValue, deltaTime, shrinkSpreadSpeed);
+			}
+			else
+			{
+				crosshairAimFactor = FMath::FInterpTo(crosshairInAirFactor, zeroValue, deltaTime, shrinkSpreadSpeed);
+			}
+			//reset the spread when shooting back to zero
+			crosshairShootingFactor = FMath::FInterpTo(crosshairShootingFactor, zeroValue, deltaTime, shrinkSpreadSpeed);
+			crosshairAimingShootableActorFactor = FMath::FInterpTo(crosshairAimingShootableActorFactor, currentAimingTargetSpread, deltaTime, shrinkSpreadSpeed);
+			const float minimumSpread{ 0.5f };
+			hudPackage.crosshairSpread = minimumSpread +
+				crosshairVelocityFactor +
+				crosshairInAirFactor -
+				crosshairAimFactor -
+				crosshairAimingShootableActorFactor +
+				crosshairShootingFactor;
+			hud->setHudPackage(hudPackage);
+
+		}
+	}
 }
 
-void UCombatComponent::multicastFire_Implementation(const FVector_NetQuantize& traceHitTarget)
+void UCombatComponent::interpFOV(float deltaTime)
 {
 	if (equippedWeapon == nullptr) return;
 
-	if (character)
+	if (isAiming)
 	{
-		character->playFireMontage(isAiming);
-		equippedWeapon->fire(traceHitTarget);
+		currentFOV = FMath::FInterpTo(currentFOV, equippedWeapon->getZoomedFOV(), deltaTime, equippedWeapon->getZoomInterpSpeed());
+	}
+	else
+	{
+		currentFOV = FMath::FInterpTo(currentFOV, defaultFOV, deltaTime, zoomInterpSpeed);
+	}
+	if (character && character->getFollowCamera())
+	{
+		character->getFollowCamera()->SetFieldOfView(currentFOV);
 	}
 }
-
-void UCombatComponent::equipWeapon(AWeaponMaster* weaponToequip)
-{
-	if (character == nullptr || weaponToequip == nullptr) return;
-
-	equippedWeapon = weaponToequip;
-	equippedWeapon->setWeaponState(EWeaponState::EWS_Equipped);
-	// this only works if a socket has been created on the character skeleton, to do so open the skeleton, right click on the right hand bone and add socket
-	// once the socket is created, rename it with a relevant name that need to be the same as the one used in this function (you might also want to rotate and reposition the socket to make the weapon look inside the character hand)
-	// right click on the socket, add preview asset to simplify the step above
-	const USkeletalMeshSocket* handSocket= character->GetMesh()->GetSocketByName(FName("rightHandSocket"));
-	if (handSocket)
-	{
-		handSocket->AttachActor(equippedWeapon,character->GetMesh());
-	}
-	equippedWeapon->SetOwner(character);
-	character->GetCharacterMovement()->bOrientRotationToMovement = false;
-	character->bUseControllerRotationYaw = true;
-}
-

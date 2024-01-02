@@ -37,6 +37,15 @@ public:
 	// function called when the weapon is fired
 	virtual void fire(const FVector& hitTarget);
 
+	//automatic fire
+
+	// boolean that keep track if the weapon should fire again after a period of time
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	bool bIsAutomatic{ true };
+	// time that should pass before the weapon fires again
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	float fireDelay{ 0.15 };
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

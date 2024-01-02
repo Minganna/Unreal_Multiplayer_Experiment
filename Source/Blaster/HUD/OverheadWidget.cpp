@@ -59,6 +59,7 @@ void UOverheadWidget::getPlayerName(APawn* inPawn)
 
 }
 
+
 void UOverheadWidget::OnLevelRemovedFromWorld(ULevel* inLevel, UWorld* inWorld)
 {
 	RemoveFromParent();

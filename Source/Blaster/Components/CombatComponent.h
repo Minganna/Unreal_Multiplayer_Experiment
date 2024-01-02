@@ -43,7 +43,8 @@ protected:
 	
 	// function used to determine if the fire button has been pressed or released
 	void fireButtonPressed(bool bPressed);
-
+	// function used to fire the weapon
+	void fire();
 	//server RPC call to inform the server that the character should fire
 	UFUNCTION(Server, Reliable)
 	void serverFire(const FVector_NetQuantize& traceHitTarget);
@@ -116,6 +117,17 @@ private:
 	float zoomInterpSpeed{ 20.0f };
 
 	void interpFOV(float deltaTime);
+
+	//Automatic Fire
+	// timer used to fire the weapon again after a period of time
+	FTimerHandle fireTimer;
+	// function used to start the fireTimer after the weapon was shot
+	void startFireTimer();
+	// callback function when the fireTimer reached the end
+	void fireTimerFinished();
+	// boolean that keep track if the weapon can fire
+	bool bCanFire{ true };
+
 public:	
 	
 
