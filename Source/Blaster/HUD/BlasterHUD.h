@@ -32,6 +32,17 @@ class BLASTER_API ABlasterHUD : public AHUD
 public:
 	// function used to draw textures on the screen
 	virtual void DrawHUD() override;
+	//value that need to be set in the blueprints to create the widget
+	UPROPERTY(EditAnywhere, Category = "PlayerStats")
+	TSubclassOf<class UUserWidget> characterOverlayClass{};
+	// pointer to the widget that take care of the player stats
+	class UCharacterOverlay* characterOverlay{};
+
+protected:
+	// Called when the game starts or when spawned
+	virtual void BeginPlay() override;
+	// function used to add the widget on screen
+	void addCharacterOverlay();
 
 private:
 	// reference to the struct that keep track of the crosshairs

@@ -141,6 +141,17 @@ private:
 	// used to determine in simulated proxy when the character should turn the root bone
 	float turnTreshold{ 0.5f };
 
+	//player health
+	//the maximum value for the player health 
+	UPROPERTY(EditAnywhere, Category = "Player Stats")
+	float maxHealth{100.0f};
+	// the current value for player health
+	UPROPERTY(ReplicatedUsing= onRep_Health, VisibleAnywhere, Category = "Player Stats")
+	float health{ maxHealth };
+	// rep notifier called when health value change
+	UFUNCTION()
+	void onRep_Health();
+
 public:	
 	// setter for overlappingWeapon variable
 	void setOverlappingWeapon(AWeaponMaster* weapon);

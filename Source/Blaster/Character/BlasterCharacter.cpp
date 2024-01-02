@@ -60,6 +60,7 @@ void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME_CONDITION(ABlasterCharacter, overlappingWeapon, COND_OwnerOnly);
+	DOREPLIFETIME(ABlasterCharacter, health);
 }
 
 
@@ -431,6 +432,10 @@ void ABlasterCharacter::hideCameraIfCharacterClose()
 			combat->equippedWeapon->getWeaponMesh()->bOwnerNoSee = false;
 		}
 	}
+}
+
+void ABlasterCharacter::onRep_Health()
+{
 }
 
 void ABlasterCharacter::setOverlappingWeapon(AWeaponMaster* weapon)
