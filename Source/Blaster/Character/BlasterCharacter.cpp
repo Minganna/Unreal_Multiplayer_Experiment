@@ -12,6 +12,7 @@
 #include "Components/CapsuleComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "BlasterAnimInstance.h"
+#include "Blaster/Blaster.h"
 
 // Sets default values
 ABlasterCharacter::ABlasterCharacter()
@@ -41,7 +42,10 @@ ABlasterCharacter::ABlasterCharacter()
 	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
 	// avoid the collision with the camera
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
+	GetMesh()->SetCollisionObjectType(ECC_CharacterMesh);
 	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
+	//change visibility channel to ensure the character can be aimed
+	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
 	//set the rotation yaw to a higher value to reduce the time spent on the character rotating
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 0.0f, 850.0f);
 
@@ -56,6 +60,7 @@ void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME_CONDITION(ABlasterCharacter, overlappingWeapon, COND_OwnerOnly);
+	DOREPLIFETIME(ABlasterCharacter, health);
 }
 
 
@@ -70,8 +75,22 @@ void ABlasterCharacter::BeginPlay()
 void ABlasterCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	aimOffset(DeltaTime);
+	if (GetLocalRole() > ENetRole::ROLE_SimulatedProxy && IsLocallyControlled())
+	{
+		aimOffset(DeltaTime);
+	}
+	else
+	{
+		timeSinceLastMovementReplication += DeltaTime;
+		float maxWaitingTime{ 0.25f };
+		if (timeSinceLastMovementReplication > maxWaitingTime)
+		{
+			OnRep_ReplicatedMovement();
+		}
+		calculateAO_Pitch();
+	}
+	
+	hideCameraIfCharacterClose();
 
 }
 
@@ -123,6 +142,31 @@ void ABlasterCharacter::playFireMontage(bool bAiming)
 		UE_LOG(LogTemp, Warning, TEXT("section Name is %s"), *sectionName.ToString());
 		animInstance->Montage_JumpToSection(sectionName);
 	}
+}
+
+void ABlasterCharacter::OnRep_ReplicatedMovement()
+{
+	Super::OnRep_ReplicatedMovement();
+	simProxyTurn();
+	timeSinceLastMovementReplication = 0.0f;
+}
+
+void ABlasterCharacter::playHitReactMontage()
+{
+	if (combat == nullptr || combat->equippedWeapon == nullptr) return;
+
+	UAnimInstance* animInstance = GetMesh()->GetAnimInstance();
+	if (animInstance && hitReactMontage)
+	{
+		animInstance->Montage_Play(fireWeaponMontage);
+		FName sectionName{ "FromFront" };
+		animInstance->Montage_JumpToSection(sectionName);
+	}
+}
+
+void ABlasterCharacter::multicastHit_Implementation()
+{
+	playHitReactMontage();
 }
 
 // Function used to move the character in forward/backward direction
@@ -217,15 +261,13 @@ void ABlasterCharacter::aimOffset(float deltaTime)
 		return; // if no weapon equipped exit function
 	}
 	
-	FVector velocity = GetVelocity();
-	//setting velocity on z axes (vertical) to 0 as no relevant to determine velocity
-	velocity.Z = 0.0f;
-	float speed = velocity.Size();
+	float speed = calculateSpeed();
 
 	bool bIsInAir = GetCharacterMovement()->IsFalling();
 
 	if (speed == 0.0f && !bIsInAir) // standing still and not jumping
 	{
+		bRotateRootBone = true;
 		FRotator currentAimRotation = FRotator(0.0f, GetBaseAimRotation().Yaw, 0.0f);
 		FRotator deltaAimRotation = UKismetMathLibrary::NormalizedDeltaRotator(currentAimRotation, startingAimRotation);
 		AO_Yaw = deltaAimRotation.Yaw;
@@ -238,12 +280,18 @@ void ABlasterCharacter::aimOffset(float deltaTime)
 	}
 	if (speed > 0.0f && !bIsInAir) // running or jumping
 	{
+		bRotateRootBone = false;
 		startingAimRotation = FRotator(0.0f, GetBaseAimRotation().Yaw, 0.0f);
 		AO_Yaw = 0.0f;
 		bUseControllerRotationYaw = true;
 		turningInPlace = ETurningInPlace::ETIP_None;
 	}
 
+	calculateAO_Pitch();
+}
+
+void ABlasterCharacter::calculateAO_Pitch()
+{
 	AO_Pitch = GetBaseAimRotation().Pitch;
 	if (AO_Pitch > 90.0f && !IsLocallyControlled())
 	{
@@ -253,6 +301,42 @@ void ABlasterCharacter::aimOffset(float deltaTime)
 		FVector2D outRange(-90.0f, 0.0f);
 		AO_Pitch = FMath::GetMappedRangeValueClamped(inRange, outRange, AO_Pitch);
 	}
+}
+
+void ABlasterCharacter::simProxyTurn()
+{
+	if (combat == nullptr || combat->equippedWeapon == nullptr) return;
+
+	bRotateRootBone = false;
+	float speed = calculateSpeed();
+	const float zeroFloat{ 0.0f };
+	if (speed > zeroFloat)
+	{
+		turningInPlace = ETurningInPlace::ETIP_None;
+		return;
+	}
+
+	proxyRotationLastFrame = proxyRotation;
+	proxyRotation = GetActorRotation();
+	proxyYaw = UKismetMathLibrary::NormalizedDeltaRotator(proxyRotation, proxyRotationLastFrame).Yaw;
+
+	if (FMath::Abs(proxyYaw) > turnTreshold)
+	{
+		if (proxyYaw > turnTreshold)
+		{
+			turningInPlace = ETurningInPlace::ETIP_Right;
+		}
+		else if (proxyYaw < -turnTreshold)
+		{
+			turningInPlace = ETurningInPlace::ETIP_Left;
+		}
+		else
+		{
+			turningInPlace = ETurningInPlace::ETIP_None;
+		}
+		return;
+	}
+	turningInPlace = ETurningInPlace::ETIP_None;
 }
 
 void ABlasterCharacter::Jump()
@@ -300,6 +384,14 @@ void ABlasterCharacter::turnInPlace(float deltaTime)
 	}
 }
 
+float ABlasterCharacter::calculateSpeed()
+{
+	FVector velocity = GetVelocity();
+	//setting velocity on z axes (vertical) to 0 as no relevant to determine velocity
+	velocity.Z = 0.0f;
+	return velocity.Size();
+}
+
 void ABlasterCharacter::onRep_OverlappingWeapon(AWeaponMaster* lastWeapon)
 {
 	if (overlappingWeapon)
@@ -318,6 +410,32 @@ void ABlasterCharacter::serverEquipButtonPress_Implementation()
 	{
 		combat->equipWeapon(overlappingWeapon);
 	}
+}
+
+void ABlasterCharacter::hideCameraIfCharacterClose()
+{
+	if (!IsLocallyControlled()) return;
+
+	if ((mainCamera->GetComponentLocation() - GetActorLocation()).Size() < cameraThreshold)
+	{
+		GetMesh()->SetVisibility(false);
+		if (combat && combat->equippedWeapon && combat->equippedWeapon->getWeaponMesh())
+		{
+			combat->equippedWeapon->getWeaponMesh()->bOwnerNoSee = true;
+		}
+	}
+	else
+	{
+		GetMesh()->SetVisibility(true);
+		if (combat && combat->equippedWeapon && combat->equippedWeapon->getWeaponMesh())
+		{
+			combat->equippedWeapon->getWeaponMesh()->bOwnerNoSee = false;
+		}
+	}
+}
+
+void ABlasterCharacter::onRep_Health()
+{
 }
 
 void ABlasterCharacter::setOverlappingWeapon(AWeaponMaster* weapon)
@@ -352,5 +470,12 @@ AWeaponMaster* ABlasterCharacter::getEquippedWeapon()
 {
 	if (combat == nullptr) return nullptr;
 	return combat->equippedWeapon;
+}
+
+FVector ABlasterCharacter::getHitTarget() const
+{
+	if(combat==nullptr) return FVector();
+
+	return combat->hitTarget;
 }
 

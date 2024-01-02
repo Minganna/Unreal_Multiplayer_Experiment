@@ -40,8 +40,13 @@ private:
 	// the effect spawned that act as a trail
 	class UParticleSystemComponent* tracerComponent;
 	// particles spawned when colliding
-	UPROPERTY(EditAnywhere)
 	UParticleSystem* inpactParticles;
+	// particles spawned when colliding with walls
+	UPROPERTY(EditAnywhere)
+	UParticleSystem* inpactParticlesWalls;
+	// particles spawned when colliding with players
+	UPROPERTY(EditAnywhere)
+	UParticleSystem* inpactParticlesPlayers;
 	// sound played when colliding
 	UPROPERTY(EditAnywhere)
 	class USoundCue* impactSound;

@@ -8,6 +8,8 @@
 #include "Particles/ParticleSystemComponent.h"
 #include "Particles/ParticleSystem.h"
 #include "Sound/SoundCue.h"
+#include "Blaster/Character/BlasterCharacter.h"
+#include "Blaster/Blaster.h"
 
 // Sets default values
 AProjectile::AProjectile()
@@ -23,6 +25,7 @@ AProjectile::AProjectile()
 	collisionBox->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
 	collisionBox->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
 	collisionBox->SetCollisionResponseToChannel(ECollisionChannel::ECC_WorldStatic, ECollisionResponse::ECR_Block);
+	collisionBox->SetCollisionResponseToChannel(ECC_CharacterMesh, ECollisionResponse::ECR_Block);
 
 	projectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovementComponent"));
 	projectileMovementComponent->bRotationFollowsVelocity = true;
@@ -52,6 +55,20 @@ void AProjectile::BeginPlay()
 
 void AProjectile::onHit(UPrimitiveComponent* hitComp, AActor* otherActor, UPrimitiveComponent* otherComp, FVector normalImpulse, const FHitResult& hit)
 {
+	ABlasterCharacter* character = Cast<ABlasterCharacter>(otherActor);
+	if (inpactParticlesWalls != nullptr)
+	{
+		inpactParticles = inpactParticlesWalls;
+	}
+	
+	if (character)
+	{
+		character->multicastHit();
+		if (inpactParticlesPlayers != nullptr)
+		{
+			inpactParticles = inpactParticlesPlayers;
+		}
+	}
 	Destroy();
 }
 

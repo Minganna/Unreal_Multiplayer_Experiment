@@ -85,7 +85,15 @@ private:
 	//crouch walk sound volume 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound", meta = (AllowPrivateAccess = "true"))
 	float crouchWalkVolume= 0.3f;
-
+	// the rotation of the character right hand
+	UPROPERTY(BlueprintReadOnly, Category = "Movement", meta = (AllowPrivateAccess = "true"))
+	FRotator rightHandRotation;
+	// boolean that keep track if the character is currently locally controlled
+	UPROPERTY(BlueprintReadOnly, Category = "Movement", meta = (AllowPrivateAccess = "true"))
+	bool bLocallyController{ false };
+	// boolean that keep track if the animation blueprint should rotate the root bone
+	UPROPERTY(BlueprintReadOnly, Category = "Movement", meta = (AllowPrivateAccess = "true"))
+	bool bRotateRootBone;
 
 
 };
