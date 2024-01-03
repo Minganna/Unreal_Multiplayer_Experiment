@@ -16,5 +16,7 @@ class BLASTER_API ABlasterGameMode : public AGameMode
 public: 
 	//function called when one of the player dies
 	virtual void playerEliminated(class ABlasterCharacter* eliminaterCharacter, class ABlasterPlayerController* victimController, ABlasterPlayerController* attackerController);
-	
+	virtual void requestRespawn(class ACharacter* eliminatedCharacter, AController* eliminatedController);
+	void checkDistanceToPlayer(TArray<AActor*>* spawningPoints);
+	float calculateDistance(const FVector characterLocation,const FVector spawnLocation);
 };

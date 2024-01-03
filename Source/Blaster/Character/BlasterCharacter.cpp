@@ -15,13 +15,14 @@
 #include "Blaster/Blaster.h"
 #include "Blaster/PlayerController/BlasterPlayerController.h"
 #include "Blaster/GameModes/BlasterGameMode.h"
+#include "TimerManager.h"
 
 // Sets default values
 ABlasterCharacter::ABlasterCharacter()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
+	SpawnCollisionHandlingMethod = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 	//Create the spring arm and attach it to the capsule collider
 	springArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("Spring Arm"));
 	springArm->SetupAttachment(GetMesh());
@@ -480,10 +481,25 @@ void ABlasterCharacter::updateHUDHealth()
 	}
 }
 
-void ABlasterCharacter::eliminated_Implementation()
+void ABlasterCharacter::eliminated()
+{
+	multicastEliminated();
+	GetWorldTimerManager().SetTimer(eliminationTimer,this,&ABlasterCharacter::eliminationTimerFinished,eliminationDelay);
+}
+
+void ABlasterCharacter::multicastEliminated_Implementation()
 {
 	bIsEliminated = true;
 	playEliminationMontage();
+}
+
+void ABlasterCharacter::eliminationTimerFinished()
+{
+	ABlasterGameMode* blasterGameMode = GetWorld()->GetAuthGameMode<ABlasterGameMode>();
+	if (blasterGameMode != nullptr)
+	{
+		blasterGameMode->requestRespawn(this, Controller);
+	}
 }
 
 void ABlasterCharacter::setOverlappingWeapon(AWeaponMaster* weapon)

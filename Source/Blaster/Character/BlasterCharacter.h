@@ -27,8 +27,10 @@ public:
 	// used to ensure simulated proxy can see the character turn correctly
 	virtual void OnRep_ReplicatedMovement() override;
 	// function called by the game mode when the player health reaches 0
-	UFUNCTION(NetMulticast,Reliable)
 	void eliminated();
+	// function called on all machines when the player health reaches 0
+	UFUNCTION(NetMulticast,Reliable)
+	void multicastEliminated();
 
 	//play animation montages
 	// function used to play the fire anim montage
@@ -160,8 +162,19 @@ private:
 	void onRep_Health();
 	// pointer to the player controller
 	class ABlasterPlayerController* blasterPlayerController;
+
+	//handle death
 	// boolean used to determine if the player health is 0
 	bool bIsEliminated = false;
+	// timer that used to delay elimination respawn
+	FTimerHandle eliminationTimer{};
+	// function called when the timer used to delay elimination respawn finish counting
+	void eliminationTimerFinished();
+	UPROPERTY(EditDefaultsOnly)
+	// delay used by the eliminationTimer
+	float eliminationDelay{3.0f};
+
+
 
 public:	
 	// setter for overlappingWeapon variable
