@@ -13,6 +13,8 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "BlasterAnimInstance.h"
 #include "Blaster/Blaster.h"
+#include "Blaster/PlayerController/BlasterPlayerController.h"
+#include "Blaster/GameModes/BlasterGameMode.h"
 
 // Sets default values
 ABlasterCharacter::ABlasterCharacter()
@@ -68,7 +70,12 @@ void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 void ABlasterCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	updateHUDHealth();
+	if (HasAuthority())
+	{
+		OnTakeAnyDamage.AddDynamic(this, &ABlasterCharacter::receiveDamage);
+	}
 }
 
 // Called every frame
@@ -144,6 +151,16 @@ void ABlasterCharacter::playFireMontage(bool bAiming)
 	}
 }
 
+void ABlasterCharacter::playEliminationMontage()
+{
+
+	UAnimInstance* animInstance = GetMesh()->GetAnimInstance();
+	if (animInstance && eliminationMontage)
+	{
+		animInstance->Montage_Play(eliminationMontage);
+	}
+}
+
 void ABlasterCharacter::OnRep_ReplicatedMovement()
 {
 	Super::OnRep_ReplicatedMovement();
@@ -162,11 +179,6 @@ void ABlasterCharacter::playHitReactMontage()
 		FName sectionName{ "FromFront" };
 		animInstance->Montage_JumpToSection(sectionName);
 	}
-}
-
-void ABlasterCharacter::multicastHit_Implementation()
-{
-	playHitReactMontage();
 }
 
 // Function used to move the character in forward/backward direction
@@ -434,8 +446,44 @@ void ABlasterCharacter::hideCameraIfCharacterClose()
 	}
 }
 
+void ABlasterCharacter::receiveDamage(AActor* damagedActor, float damage, const UDamageType* damageType, AController* instigatorController, AActor* damageCauser)
+{
+	health = FMath::Clamp(health - damage, 0.0f, maxHealth);
+	updateHUDHealth();
+	playHitReactMontage();
+
+	if (health == 0.0f)
+	{
+		ABlasterGameMode* blasterGameMode = GetWorld()->GetAuthGameMode<ABlasterGameMode>();
+		ABlasterPlayerController* attackerController = Cast<ABlasterPlayerController>(instigatorController);
+		if (blasterGameMode != nullptr)
+		{
+			blasterPlayerController = blasterPlayerController == nullptr ? Cast<ABlasterPlayerController>(Controller) : blasterPlayerController;
+			blasterGameMode->playerEliminated(this,blasterPlayerController, attackerController);
+		}
+	}
+
+}
+
 void ABlasterCharacter::onRep_Health()
 {
+	updateHUDHealth();
+	playHitReactMontage();
+}
+
+void ABlasterCharacter::updateHUDHealth()
+{
+	blasterPlayerController = blasterPlayerController == nullptr ? Cast<ABlasterPlayerController>(Controller) : blasterPlayerController;
+	if (blasterPlayerController)
+	{
+		blasterPlayerController->setHudHealth(health, maxHealth);
+	}
+}
+
+void ABlasterCharacter::eliminated_Implementation()
+{
+	bIsEliminated = true;
+	playEliminationMontage();
 }
 
 void ABlasterCharacter::setOverlappingWeapon(AWeaponMaster* weapon)

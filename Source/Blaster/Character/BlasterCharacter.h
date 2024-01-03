@@ -24,21 +24,22 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	// function called as soon as the components are initialised
 	virtual void PostInitializeComponents() override;
-
-	//play animation montages
-	// 
-	// function used to play the fire anim montage
-	void playFireMontage(bool bAiming);
-	// ensure the hit reaction animation montage is played on each machines
-	UFUNCTION(NetMulticast,Unreliable)
-	void multicastHit();
 	// used to ensure simulated proxy can see the character turn correctly
 	virtual void OnRep_ReplicatedMovement() override;
+	// function called by the game mode when the player health reaches 0
+	UFUNCTION(NetMulticast,Reliable)
+	void eliminated();
 
+	//play animation montages
+	// function used to play the fire anim montage
+	void playFireMontage(bool bAiming);
+	// function used to play the elimination anim montage
+	void playEliminationMontage();
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	void updateHUDHealth();
 	// Function used to move the character in forward/backward direction
 	void moveForward(float value);
 	//function used to move the character in side direction
@@ -73,6 +74,9 @@ protected:
 	//play animation montages
 	// function used to play the animation montage used when the character gets hit
 	void playHitReactMontage();
+	// callback function when the character is damaged
+	UFUNCTION()
+	void  receiveDamage(AActor* damagedActor, float damage, const UDamageType* damageType, class AController* instigatorController, AActor* damageCauser);
 
 private:
 	// class that allow the camera to follow the player
@@ -127,6 +131,9 @@ private:
 	//pointer to the animation montage used when the character gets hit
 	UPROPERTY(EditAnywhere, Category = Combat)
 	class UAnimMontage* hitReactMontage;
+	//pointer to the animation montage used when the character dies
+	UPROPERTY(EditAnywhere, Category = Combat)
+	class UAnimMontage* eliminationMontage;
 
 	//simulated proxy logic
 
@@ -151,6 +158,10 @@ private:
 	// rep notifier called when health value change
 	UFUNCTION()
 	void onRep_Health();
+	// pointer to the player controller
+	class ABlasterPlayerController* blasterPlayerController;
+	// boolean used to determine if the player health is 0
+	bool bIsEliminated = false;
 
 public:	
 	// setter for overlappingWeapon variable
@@ -173,4 +184,6 @@ public:
 	FORCEINLINE UCameraComponent* getFollowCamera() const { return mainCamera; }
 	//getter for bRotateRootBone
 	FORCEINLINE bool shouldRotateRootBone() const { return bRotateRootBone; }
+	// getter for bIsEliminated
+	FORCEINLINE bool isEliminated() const { return bIsEliminated; }
 };

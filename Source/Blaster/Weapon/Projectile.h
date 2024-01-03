@@ -25,7 +25,9 @@ protected:
 	// Called when the projectile hit something
 	UFUNCTION()
 	virtual void onHit(UPrimitiveComponent* hitComp, AActor* otherActor, UPrimitiveComponent* otherComp, FVector normalImpulse, const FHitResult& hit);
-
+	// the damage inflicted by this bullet
+	UPROPERTY(EditAnywhere)
+	float damage{ 20.0f };
 private:
 	// the box collider for the projectile
 	UPROPERTY(EditAnywhere)

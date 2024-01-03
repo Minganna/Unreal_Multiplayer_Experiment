@@ -13,5 +13,13 @@ UCLASS()
 class BLASTER_API ABlasterPlayerController : public APlayerController
 {
 	GENERATED_BODY()
-	
+public:
+	// function used to update the value of health in the hud
+	void setHudHealth(const float health, const float maxHealth);
+protected:
+	// Called when the game starts or when spawned
+	virtual void BeginPlay() override;
+private:
+	// pointer to the main game hud
+	class ABlasterHUD* blasterHud;
 };
