@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "Blaster/Types/TurningInPlace.h"
 #include "Blaster/Interfaces/CrosshairInteractionInterface.h"
+#include "Components/TimelineComponent.h"
 #include "BlasterCharacter.generated.h"
 
 UCLASS()
@@ -174,7 +175,26 @@ private:
 	// delay used by the eliminationTimer
 	float eliminationDelay{3.0f};
 
-
+	//dissolve effect
+	// timeline used in blueprints to dissolve the character when eliminated
+	UPROPERTY(VisibleAnywhere);
+	UTimelineComponent* dissolveTimeline;
+	// track used by the dissolve timeline
+	FOnTimelineFloat dissolveTrack;
+	//function used to start dissolving the character on elimination
+	void startDissolve();
+	// function used to keep track on the dissolving process
+	UFUNCTION()
+	void updateDissolveMaterial(float dissolveValue);
+	// the curve used to dissolve the character
+	UPROPERTY(EditAnywhere)
+	UCurveFloat* dissolveCurve;
+	// dynamic instance that can be changed at runtime
+	UPROPERTY(VisibleAnywhere, Category = "Eliminated");
+	UMaterialInstanceDynamic* dynamicDissolveMaterialInstance;
+	// material assigned in blueprints used when the characted is eliminated
+	UPROPERTY(EditAnywhere, Category = "Eliminated");
+	UMaterialInstance* dissolveMaterialInstance;
 
 public:	
 	// setter for overlappingWeapon variable

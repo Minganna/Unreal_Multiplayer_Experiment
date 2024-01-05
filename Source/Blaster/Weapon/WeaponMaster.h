@@ -36,6 +36,8 @@ public:
 	void showPickupWidget(bool bShowWidget);
 	// function called when the weapon is fired
 	virtual void fire(const FVector& hitTarget);
+	//function called when dropping the weapon
+	void dropped();
 
 	//automatic fire
 

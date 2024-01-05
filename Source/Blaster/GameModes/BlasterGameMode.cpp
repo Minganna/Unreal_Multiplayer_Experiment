@@ -29,7 +29,10 @@ void ABlasterGameMode::requestRespawn(ACharacter* eliminatedCharacter, AControll
 		TArray<AActor*> playerStarts{};
 		UGameplayStatics::GetAllActorsOfClass(this, APlayerStart::StaticClass(), playerStarts);
 		// ensure the spawning position are not too close to other players
-		checkDistanceToPlayer(&playerStarts);
+		if (playerStarts.Num() > 1)
+		{
+			checkDistanceToPlayer(&playerStarts);
+		}
 		// spawn at a random position
 		int32 selection = FMath::RandRange(0, playerStarts.Num() - 1);
 		RestartPlayerAtPlayerStart(eliminatedController, playerStarts[selection]);

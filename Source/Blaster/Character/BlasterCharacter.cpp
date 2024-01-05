@@ -32,6 +32,8 @@ ABlasterCharacter::ABlasterCharacter()
 	mainCamera = CreateDefaultSubobject <UCameraComponent>(TEXT("Main Camera"));
 	mainCamera->SetupAttachment(springArm, USpringArmComponent::SocketName);
 	mainCamera->bUsePawnControlRotation = false;
+	// create the dissolve Timeline
+	dissolveTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("DissolveTimelineComponent"));
 
 	bUseControllerRotationYaw = false;
 	GetCharacterMovement()->bOrientRotationToMovement = true;
@@ -483,6 +485,11 @@ void ABlasterCharacter::updateHUDHealth()
 
 void ABlasterCharacter::eliminated()
 {
+	//drop the weapon
+	if (combat && combat->equippedWeapon)
+	{
+		combat->equippedWeapon->dropped();
+	}
 	multicastEliminated();
 	GetWorldTimerManager().SetTimer(eliminationTimer,this,&ABlasterCharacter::eliminationTimerFinished,eliminationDelay);
 }
@@ -491,6 +498,28 @@ void ABlasterCharacter::multicastEliminated_Implementation()
 {
 	bIsEliminated = true;
 	playEliminationMontage();
+
+	// start dissolve effect for the character death
+	if (dissolveMaterialInstance!=nullptr)
+	{
+		dynamicDissolveMaterialInstance = UMaterialInstanceDynamic::Create(dissolveMaterialInstance, this);
+		GetMesh()->SetMaterial(0, dynamicDissolveMaterialInstance);
+		dynamicDissolveMaterialInstance->SetScalarParameterValue(TEXT("dissolve"), 0.55f);
+		dynamicDissolveMaterialInstance->SetScalarParameterValue(TEXT("glow"), 200.0f);
+	}
+	startDissolve();
+
+	//disable character moevement
+	GetCharacterMovement()->DisableMovement();
+	GetCharacterMovement()->StopMovementImmediately();
+	if (blasterPlayerController)
+	{
+		DisableInput(blasterPlayerController);
+	}
+
+	// disable collision
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 void ABlasterCharacter::eliminationTimerFinished()
@@ -499,6 +528,24 @@ void ABlasterCharacter::eliminationTimerFinished()
 	if (blasterGameMode != nullptr)
 	{
 		blasterGameMode->requestRespawn(this, Controller);
+	}
+}
+
+void ABlasterCharacter::startDissolve()
+{
+	dissolveTrack.BindDynamic(this, &ABlasterCharacter::updateDissolveMaterial);
+	if (dissolveCurve && dissolveTimeline)
+	{
+		dissolveTimeline->AddInterpFloat(dissolveCurve, dissolveTrack);
+		dissolveTimeline->Play();
+	}
+}
+
+void ABlasterCharacter::updateDissolveMaterial(float dissolveValue)
+{
+	if (dynamicDissolveMaterialInstance != nullptr)
+	{
+		dynamicDissolveMaterialInstance->SetScalarParameterValue(TEXT("dissolve"), dissolveValue);
 	}
 }
 
