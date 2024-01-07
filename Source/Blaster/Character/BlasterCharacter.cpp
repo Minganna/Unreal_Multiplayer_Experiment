@@ -16,6 +16,9 @@
 #include "Blaster/PlayerController/BlasterPlayerController.h"
 #include "Blaster/GameModes/BlasterGameMode.h"
 #include "TimerManager.h"
+#include "Kismet/GameplayStatics.h"
+#include "Sound/SoundCue.h"
+#include "Particles/ParticleSystemComponent.h"
 
 // Sets default values
 ABlasterCharacter::ABlasterCharacter()
@@ -161,6 +164,15 @@ void ABlasterCharacter::playEliminationMontage()
 	if (animInstance && eliminationMontage)
 	{
 		animInstance->Montage_Play(eliminationMontage);
+	}
+}
+
+void ABlasterCharacter::Destroyed()
+{
+	Super::Destroyed();
+	if (eliminationBotComponent)
+	{
+		eliminationBotComponent->DestroyComponent();
 	}
 }
 
@@ -520,6 +532,19 @@ void ABlasterCharacter::multicastEliminated_Implementation()
 	// disable collision
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	//spawn elimination bot
+
+	if (eliminationBotEffect)
+	{
+		const float distanceToPlayer{ 200.0f };
+		FVector elimbotSpawnPoint(GetActorLocation().X, GetActorLocation().Y, GetActorLocation().Z + distanceToPlayer);
+		eliminationBotComponent = UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), eliminationBotEffect, elimbotSpawnPoint, GetActorRotation());
+	}
+	if (eliminationBotSound)
+	{
+		UGameplayStatics::SpawnSoundAtLocation(this, eliminationBotSound, GetActorLocation());
+	}
 }
 
 void ABlasterCharacter::eliminationTimerFinished()

@@ -39,6 +39,9 @@ public:
 	// function used to play the elimination anim montage
 	void playEliminationMontage();
 
+	// Called when the gameObject is destroyed
+	virtual void Destroyed() override;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -195,6 +198,17 @@ private:
 	// material assigned in blueprints used when the characted is eliminated
 	UPROPERTY(EditAnywhere, Category = "Eliminated");
 	UMaterialInstance* dissolveMaterialInstance;
+
+	//Elim Bot
+
+	//particle effect that is spawned when the character dies
+	UPROPERTY(EditAnywhere)
+	UParticleSystem* eliminationBotEffect;
+	// variable where the eliminationBotEffect is stored after spawned
+	UPROPERTY(VisibleAnywhere)
+	UParticleSystemComponent* eliminationBotComponent;
+	UPROPERTY(EditAnywhere)
+	class USoundCue* eliminationBotSound;
 
 public:	
 	// setter for overlappingWeapon variable
