@@ -19,6 +19,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundCue.h"
 #include "Particles/ParticleSystemComponent.h"
+#include "Blaster/PlayerState/BlasterPlayerState.h"
 
 // Sets default values
 ABlasterCharacter::ABlasterCharacter()
@@ -88,6 +89,7 @@ void ABlasterCharacter::BeginPlay()
 void ABlasterCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	pollInit();
 	if (GetLocalRole() > ENetRole::ROLE_SimulatedProxy && IsLocallyControlled())
 	{
 		aimOffset(DeltaTime);
@@ -151,8 +153,8 @@ void ABlasterCharacter::playFireMontage(bool bAiming)
 		animInstance->Montage_Play(fireWeaponMontage);
 		FName sectionName;
 		sectionName = bAiming ? FName("RifleAim") : FName("RifleHip");
-		UE_LOG(LogTemp, Warning, TEXT("bAiming value is %s"), (bAiming ? TEXT("true") : TEXT("false")));
-		UE_LOG(LogTemp, Warning, TEXT("section Name is %s"), *sectionName.ToString());
+		//UE_LOG(LogTemp, Warning, TEXT("bAiming value is %s"), (bAiming ? TEXT("true") : TEXT("false")));
+		//UE_LOG(LogTemp, Warning, TEXT("section Name is %s"), *sectionName.ToString());
 		animInstance->Montage_JumpToSection(sectionName);
 	}
 }
@@ -478,6 +480,18 @@ void ABlasterCharacter::receiveDamage(AActor* damagedActor, float damage, const 
 		}
 	}
 
+}
+
+void ABlasterCharacter::pollInit()
+{
+	if (blasterPlayerState == nullptr)
+	{
+		blasterPlayerState = GetPlayerState<ABlasterPlayerState>();
+		if (blasterPlayerState)
+		{
+			blasterPlayerState->addToScore(0.0f);
+		}
+	}
 }
 
 void ABlasterCharacter::onRep_Health()

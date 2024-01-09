@@ -20,4 +20,8 @@ public:
 	// variable binded to the widget visible property for the health text
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* healthText;
+	// variable binded to the widget visible property for the Score text
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* scoreAmount;
+
 };

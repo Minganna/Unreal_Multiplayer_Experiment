@@ -83,6 +83,9 @@ protected:
 	// callback function when the character is damaged
 	UFUNCTION()
 	void  receiveDamage(AActor* damagedActor, float damage, const UDamageType* damageType, class AController* instigatorController, AActor* damageCauser);
+	
+	// poll for any relevant classes and initialize the hud 
+	void pollInit();
 
 private:
 	// class that allow the camera to follow the player
@@ -209,6 +212,8 @@ private:
 	UParticleSystemComponent* eliminationBotComponent;
 	UPROPERTY(EditAnywhere)
 	class USoundCue* eliminationBotSound;
+	//pointer to the player state 
+	class ABlasterPlayerState* blasterPlayerState;
 
 public:	
 	// setter for overlappingWeapon variable
@@ -233,4 +238,8 @@ public:
 	FORCEINLINE bool shouldRotateRootBone() const { return bRotateRootBone; }
 	// getter for bIsEliminated
 	FORCEINLINE bool isEliminated() const { return bIsEliminated; }
+	// getter for the health value
+	FORCEINLINE float getHealth() const { return health; }
+	// getter for the max health value
+	FORCEINLINE float getMaxHealth() const { return maxHealth; }
 };
