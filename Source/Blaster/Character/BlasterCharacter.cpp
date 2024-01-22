@@ -13,13 +13,20 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "BlasterAnimInstance.h"
 #include "Blaster/Blaster.h"
+#include "Blaster/PlayerController/BlasterPlayerController.h"
+#include "Blaster/GameModes/BlasterGameMode.h"
+#include "TimerManager.h"
+#include "Kismet/GameplayStatics.h"
+#include "Sound/SoundCue.h"
+#include "Particles/ParticleSystemComponent.h"
+#include "Blaster/PlayerState/BlasterPlayerState.h"
 
 // Sets default values
 ABlasterCharacter::ABlasterCharacter()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
+	SpawnCollisionHandlingMethod = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 	//Create the spring arm and attach it to the capsule collider
 	springArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("Spring Arm"));
 	springArm->SetupAttachment(GetMesh());
@@ -29,6 +36,8 @@ ABlasterCharacter::ABlasterCharacter()
 	mainCamera = CreateDefaultSubobject <UCameraComponent>(TEXT("Main Camera"));
 	mainCamera->SetupAttachment(springArm, USpringArmComponent::SocketName);
 	mainCamera->bUsePawnControlRotation = false;
+	// create the dissolve Timeline
+	dissolveTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("DissolveTimelineComponent"));
 
 	bUseControllerRotationYaw = false;
 	GetCharacterMovement()->bOrientRotationToMovement = true;
@@ -68,13 +77,19 @@ void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 void ABlasterCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	updateHUDHealth();
+	if (HasAuthority())
+	{
+		OnTakeAnyDamage.AddDynamic(this, &ABlasterCharacter::receiveDamage);
+	}
 }
 
 // Called every frame
 void ABlasterCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	pollInit();
 	if (GetLocalRole() > ENetRole::ROLE_SimulatedProxy && IsLocallyControlled())
 	{
 		aimOffset(DeltaTime);
@@ -138,9 +153,28 @@ void ABlasterCharacter::playFireMontage(bool bAiming)
 		animInstance->Montage_Play(fireWeaponMontage);
 		FName sectionName;
 		sectionName = bAiming ? FName("RifleAim") : FName("RifleHip");
-		UE_LOG(LogTemp, Warning, TEXT("bAiming value is %s"), (bAiming ? TEXT("true") : TEXT("false")));
-		UE_LOG(LogTemp, Warning, TEXT("section Name is %s"), *sectionName.ToString());
+		//UE_LOG(LogTemp, Warning, TEXT("bAiming value is %s"), (bAiming ? TEXT("true") : TEXT("false")));
+		//UE_LOG(LogTemp, Warning, TEXT("section Name is %s"), *sectionName.ToString());
 		animInstance->Montage_JumpToSection(sectionName);
+	}
+}
+
+void ABlasterCharacter::playEliminationMontage()
+{
+
+	UAnimInstance* animInstance = GetMesh()->GetAnimInstance();
+	if (animInstance && eliminationMontage)
+	{
+		animInstance->Montage_Play(eliminationMontage);
+	}
+}
+
+void ABlasterCharacter::Destroyed()
+{
+	Super::Destroyed();
+	if (eliminationBotComponent)
+	{
+		eliminationBotComponent->DestroyComponent();
 	}
 }
 
@@ -162,11 +196,6 @@ void ABlasterCharacter::playHitReactMontage()
 		FName sectionName{ "FromFront" };
 		animInstance->Montage_JumpToSection(sectionName);
 	}
-}
-
-void ABlasterCharacter::multicastHit_Implementation()
-{
-	playHitReactMontage();
 }
 
 // Function used to move the character in forward/backward direction
@@ -434,8 +463,131 @@ void ABlasterCharacter::hideCameraIfCharacterClose()
 	}
 }
 
+void ABlasterCharacter::receiveDamage(AActor* damagedActor, float damage, const UDamageType* damageType, AController* instigatorController, AActor* damageCauser)
+{
+	health = FMath::Clamp(health - damage, 0.0f, maxHealth);
+	updateHUDHealth();
+	playHitReactMontage();
+
+	if (health == 0.0f)
+	{
+		ABlasterGameMode* blasterGameMode = GetWorld()->GetAuthGameMode<ABlasterGameMode>();
+		ABlasterPlayerController* attackerController = Cast<ABlasterPlayerController>(instigatorController);
+		if (blasterGameMode != nullptr)
+		{
+			blasterPlayerController = blasterPlayerController == nullptr ? Cast<ABlasterPlayerController>(Controller) : blasterPlayerController;
+			blasterGameMode->playerEliminated(this,blasterPlayerController, attackerController);
+		}
+	}
+
+}
+
+void ABlasterCharacter::pollInit()
+{
+	if (blasterPlayerState == nullptr)
+	{
+		blasterPlayerState = GetPlayerState<ABlasterPlayerState>();
+		if (blasterPlayerState)
+		{
+			blasterPlayerState->addToScore(0.0f);
+			blasterPlayerState->addToDefeats(0);
+			blasterPlayerState->showHideEliminatedText(false);
+		}
+	}
+}
+
 void ABlasterCharacter::onRep_Health()
 {
+	updateHUDHealth();
+	playHitReactMontage();
+}
+
+void ABlasterCharacter::updateHUDHealth()
+{
+	blasterPlayerController = blasterPlayerController == nullptr ? Cast<ABlasterPlayerController>(Controller) : blasterPlayerController;
+	if (blasterPlayerController)
+	{
+		blasterPlayerController->setHudHealth(health, maxHealth);
+	}
+}
+
+void ABlasterCharacter::eliminated()
+{
+	//drop the weapon
+	if (combat && combat->equippedWeapon)
+	{
+		combat->equippedWeapon->dropped();
+	}
+	multicastEliminated();
+	GetWorldTimerManager().SetTimer(eliminationTimer,this,&ABlasterCharacter::eliminationTimerFinished,eliminationDelay);
+}
+
+void ABlasterCharacter::multicastEliminated_Implementation()
+{
+	bIsEliminated = true;
+	playEliminationMontage();
+
+	// start dissolve effect for the character death
+	if (dissolveMaterialInstance!=nullptr)
+	{
+		dynamicDissolveMaterialInstance = UMaterialInstanceDynamic::Create(dissolveMaterialInstance, this);
+		GetMesh()->SetMaterial(0, dynamicDissolveMaterialInstance);
+		dynamicDissolveMaterialInstance->SetScalarParameterValue(TEXT("dissolve"), 0.55f);
+		dynamicDissolveMaterialInstance->SetScalarParameterValue(TEXT("glow"), 200.0f);
+	}
+	startDissolve();
+
+	//disable character moevement
+	GetCharacterMovement()->DisableMovement();
+	GetCharacterMovement()->StopMovementImmediately();
+	if (blasterPlayerController)
+	{
+		DisableInput(blasterPlayerController);
+	}
+
+	// disable collision
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	//spawn elimination bot
+
+	if (eliminationBotEffect)
+	{
+		const float distanceToPlayer{ 200.0f };
+		FVector elimbotSpawnPoint(GetActorLocation().X, GetActorLocation().Y, GetActorLocation().Z + distanceToPlayer);
+		eliminationBotComponent = UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), eliminationBotEffect, elimbotSpawnPoint, GetActorRotation());
+	}
+	if (eliminationBotSound)
+	{
+		UGameplayStatics::SpawnSoundAtLocation(this, eliminationBotSound, GetActorLocation());
+	}
+}
+
+void ABlasterCharacter::eliminationTimerFinished()
+{
+	ABlasterGameMode* blasterGameMode = GetWorld()->GetAuthGameMode<ABlasterGameMode>();
+	if (blasterGameMode != nullptr)
+	{
+		blasterGameMode->requestRespawn(this, Controller);
+	}
+}
+
+void ABlasterCharacter::startDissolve()
+{
+	dissolveTrack.BindDynamic(this, &ABlasterCharacter::updateDissolveMaterial);
+	if (dissolveCurve && dissolveTimeline)
+	{
+		dissolveTimeline->AddInterpFloat(dissolveCurve, dissolveTrack);
+		dissolveTimeline->Play();
+	}
+}
+
+void ABlasterCharacter::updateDissolveMaterial(float dissolveValue)
+{
+	if (dynamicDissolveMaterialInstance != nullptr)
+	{
+		dynamicDissolveMaterialInstance->SetScalarParameterValue(TEXT("dissolve"), dissolveValue);
+	}
 }
 
 void ABlasterCharacter::setOverlappingWeapon(AWeaponMaster* weapon)

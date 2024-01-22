@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "Blaster/Types/TurningInPlace.h"
 #include "Blaster/Interfaces/CrosshairInteractionInterface.h"
+#include "Components/TimelineComponent.h"
 #include "BlasterCharacter.generated.h"
 
 UCLASS()
@@ -24,21 +25,27 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	// function called as soon as the components are initialised
 	virtual void PostInitializeComponents() override;
-
-	//play animation montages
-	// 
-	// function used to play the fire anim montage
-	void playFireMontage(bool bAiming);
-	// ensure the hit reaction animation montage is played on each machines
-	UFUNCTION(NetMulticast,Unreliable)
-	void multicastHit();
 	// used to ensure simulated proxy can see the character turn correctly
 	virtual void OnRep_ReplicatedMovement() override;
+	// function called by the game mode when the player health reaches 0
+	void eliminated();
+	// function called on all machines when the player health reaches 0
+	UFUNCTION(NetMulticast,Reliable)
+	void multicastEliminated();
 
+	//play animation montages
+	// function used to play the fire anim montage
+	void playFireMontage(bool bAiming);
+	// function used to play the elimination anim montage
+	void playEliminationMontage();
+
+	// Called when the gameObject is destroyed
+	virtual void Destroyed() override;
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	void updateHUDHealth();
 	// Function used to move the character in forward/backward direction
 	void moveForward(float value);
 	//function used to move the character in side direction
@@ -73,6 +80,12 @@ protected:
 	//play animation montages
 	// function used to play the animation montage used when the character gets hit
 	void playHitReactMontage();
+	// callback function when the character is damaged
+	UFUNCTION()
+	void  receiveDamage(AActor* damagedActor, float damage, const UDamageType* damageType, class AController* instigatorController, AActor* damageCauser);
+	
+	// poll for any relevant classes and initialize the hud 
+	void pollInit();
 
 private:
 	// class that allow the camera to follow the player
@@ -127,6 +140,9 @@ private:
 	//pointer to the animation montage used when the character gets hit
 	UPROPERTY(EditAnywhere, Category = Combat)
 	class UAnimMontage* hitReactMontage;
+	//pointer to the animation montage used when the character dies
+	UPROPERTY(EditAnywhere, Category = Combat)
+	class UAnimMontage* eliminationMontage;
 
 	//simulated proxy logic
 
@@ -151,6 +167,53 @@ private:
 	// rep notifier called when health value change
 	UFUNCTION()
 	void onRep_Health();
+	// pointer to the player controller
+	class ABlasterPlayerController* blasterPlayerController;
+
+	//handle death
+	// boolean used to determine if the player health is 0
+	bool bIsEliminated = false;
+	// timer that used to delay elimination respawn
+	FTimerHandle eliminationTimer{};
+	// function called when the timer used to delay elimination respawn finish counting
+	void eliminationTimerFinished();
+	UPROPERTY(EditDefaultsOnly)
+	// delay used by the eliminationTimer
+	float eliminationDelay{3.0f};
+
+	//dissolve effect
+	// timeline used in blueprints to dissolve the character when eliminated
+	UPROPERTY(VisibleAnywhere);
+	UTimelineComponent* dissolveTimeline{ nullptr };
+	// track used by the dissolve timeline
+	FOnTimelineFloat dissolveTrack{};
+	//function used to start dissolving the character on elimination
+	void startDissolve();
+	// function used to keep track on the dissolving process
+	UFUNCTION()
+	void updateDissolveMaterial(float dissolveValue);
+	// the curve used to dissolve the character
+	UPROPERTY(EditAnywhere)
+	UCurveFloat* dissolveCurve{ nullptr };
+	// dynamic instance that can be changed at runtime
+	UPROPERTY(VisibleAnywhere, Category = "Eliminated");
+	UMaterialInstanceDynamic* dynamicDissolveMaterialInstance{ nullptr };
+	// material assigned in blueprints used when the characted is eliminated
+	UPROPERTY(EditAnywhere, Category = "Eliminated");
+	UMaterialInstance* dissolveMaterialInstance{ nullptr };
+
+	//Elim Bot
+
+	//particle effect that is spawned when the character dies
+	UPROPERTY(EditAnywhere)
+	UParticleSystem* eliminationBotEffect{ nullptr };
+	// variable where the eliminationBotEffect is stored after spawned
+	UPROPERTY(VisibleAnywhere)
+	UParticleSystemComponent* eliminationBotComponent{ nullptr };
+	UPROPERTY(EditAnywhere)
+	class USoundCue* eliminationBotSound{ nullptr };
+	//pointer to the player state 
+	class ABlasterPlayerState* blasterPlayerState{ nullptr };
 
 public:	
 	// setter for overlappingWeapon variable
@@ -173,4 +236,10 @@ public:
 	FORCEINLINE UCameraComponent* getFollowCamera() const { return mainCamera; }
 	//getter for bRotateRootBone
 	FORCEINLINE bool shouldRotateRootBone() const { return bRotateRootBone; }
+	// getter for bIsEliminated
+	FORCEINLINE bool isEliminated() const { return bIsEliminated; }
+	// getter for the health value
+	FORCEINLINE float getHealth() const { return health; }
+	// getter for the max health value
+	FORCEINLINE float getMaxHealth() const { return maxHealth; }
 };

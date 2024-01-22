@@ -55,15 +55,13 @@ void AProjectile::BeginPlay()
 
 void AProjectile::onHit(UPrimitiveComponent* hitComp, AActor* otherActor, UPrimitiveComponent* otherComp, FVector normalImpulse, const FHitResult& hit)
 {
-	ABlasterCharacter* character = Cast<ABlasterCharacter>(otherActor);
 	if (inpactParticlesWalls != nullptr)
 	{
 		inpactParticles = inpactParticlesWalls;
 	}
-	
+	ABlasterCharacter* character = Cast<ABlasterCharacter>(otherActor);
 	if (character)
 	{
-		character->multicastHit();
 		if (inpactParticlesPlayers != nullptr)
 		{
 			inpactParticles = inpactParticlesPlayers;

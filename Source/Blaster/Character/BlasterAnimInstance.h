@@ -94,6 +94,8 @@ private:
 	// boolean that keep track if the animation blueprint should rotate the root bone
 	UPROPERTY(BlueprintReadOnly, Category = "Movement", meta = (AllowPrivateAccess = "true"))
 	bool bRotateRootBone;
-
+	// boolean that keep track if the animation blueprint display the elimination animation
+	UPROPERTY(BlueprintReadOnly, Category = "Combat", meta = (AllowPrivateAccess = "true"))
+	bool bEliminated;
 
 };

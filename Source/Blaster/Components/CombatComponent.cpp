@@ -153,6 +153,15 @@ void UCombatComponent::onRep_EquippedWeapon()
 {
 	if (equippedWeapon && character)
 	{
+		equippedWeapon->setWeaponState(EWeaponState::EWS_Equipped);
+		// this only works if a socket has been created on the character skeleton, to do so open the skeleton, right click on the right hand bone and add socket
+		// once the socket is created, rename it with a relevant name that need to be the same as the one used in this function (you might also want to rotate and reposition the socket to make the weapon look inside the character hand)
+		// right click on the socket, add preview asset to simplify the step above
+		const USkeletalMeshSocket* handSocket = character->GetMesh()->GetSocketByName(FName("rightHandSocket"));
+		if (handSocket)
+		{
+			handSocket->AttachActor(equippedWeapon, character->GetMesh());
+		}
 		character->GetCharacterMovement()->bOrientRotationToMovement = false;
 		character->bUseControllerRotationYaw = true;
 	}
