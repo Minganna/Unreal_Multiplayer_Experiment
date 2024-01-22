@@ -17,6 +17,11 @@ void ABlasterGameMode::playerEliminated(ABlasterCharacter* eliminaterCharacter, 
 	{
 		attackerPlayerState->addToScore(1.0f);
 	}
+	if (victimPlayerState)
+	{
+		victimPlayerState->addToDefeats(1);
+		victimPlayerState->showHideEliminatedText(true);
+	}
 	if (eliminaterCharacter != nullptr)
 	{
 		eliminaterCharacter->eliminated();

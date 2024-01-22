@@ -18,6 +18,10 @@ public:
 	void setHudHealth(const float health, const float maxHealth);
 	// function used to update the value of score in the hud
 	void setHudHScore(const float score);
+	// function used to update the value of defeats in the hud
+	void setHudDefeats(const int32 defeats);
+	// function used to show or hide the eliminated text on the hud
+	void showHideEliminatedText(bool isActive);
 	// function called when the pawn is possessed
 	virtual void OnPossess(APawn* inPawn) override;
 protected:
@@ -25,5 +29,5 @@ protected:
 	virtual void BeginPlay() override;
 private:
 	// pointer to the main game hud
-	class ABlasterHUD* blasterHud;
+	class ABlasterHUD* blasterHud{nullptr};
 };

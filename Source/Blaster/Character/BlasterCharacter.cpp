@@ -490,6 +490,8 @@ void ABlasterCharacter::pollInit()
 		if (blasterPlayerState)
 		{
 			blasterPlayerState->addToScore(0.0f);
+			blasterPlayerState->addToDefeats(0);
+			blasterPlayerState->showHideEliminatedText(false);
 		}
 	}
 }

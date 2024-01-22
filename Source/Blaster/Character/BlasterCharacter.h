@@ -184,9 +184,9 @@ private:
 	//dissolve effect
 	// timeline used in blueprints to dissolve the character when eliminated
 	UPROPERTY(VisibleAnywhere);
-	UTimelineComponent* dissolveTimeline;
+	UTimelineComponent* dissolveTimeline{ nullptr };
 	// track used by the dissolve timeline
-	FOnTimelineFloat dissolveTrack;
+	FOnTimelineFloat dissolveTrack{};
 	//function used to start dissolving the character on elimination
 	void startDissolve();
 	// function used to keep track on the dissolving process
@@ -194,26 +194,26 @@ private:
 	void updateDissolveMaterial(float dissolveValue);
 	// the curve used to dissolve the character
 	UPROPERTY(EditAnywhere)
-	UCurveFloat* dissolveCurve;
+	UCurveFloat* dissolveCurve{ nullptr };
 	// dynamic instance that can be changed at runtime
 	UPROPERTY(VisibleAnywhere, Category = "Eliminated");
-	UMaterialInstanceDynamic* dynamicDissolveMaterialInstance;
+	UMaterialInstanceDynamic* dynamicDissolveMaterialInstance{ nullptr };
 	// material assigned in blueprints used when the characted is eliminated
 	UPROPERTY(EditAnywhere, Category = "Eliminated");
-	UMaterialInstance* dissolveMaterialInstance;
+	UMaterialInstance* dissolveMaterialInstance{ nullptr };
 
 	//Elim Bot
 
 	//particle effect that is spawned when the character dies
 	UPROPERTY(EditAnywhere)
-	UParticleSystem* eliminationBotEffect;
+	UParticleSystem* eliminationBotEffect{ nullptr };
 	// variable where the eliminationBotEffect is stored after spawned
 	UPROPERTY(VisibleAnywhere)
-	UParticleSystemComponent* eliminationBotComponent;
+	UParticleSystemComponent* eliminationBotComponent{ nullptr };
 	UPROPERTY(EditAnywhere)
-	class USoundCue* eliminationBotSound;
+	class USoundCue* eliminationBotSound{ nullptr };
 	//pointer to the player state 
-	class ABlasterPlayerState* blasterPlayerState;
+	class ABlasterPlayerState* blasterPlayerState{ nullptr };
 
 public:	
 	// setter for overlappingWeapon variable

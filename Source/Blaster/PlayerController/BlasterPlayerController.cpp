@@ -15,12 +15,15 @@ void ABlasterPlayerController::BeginPlay()
 	Super::BeginPlay();
 
 	blasterHud = Cast<ABlasterHUD>(GetHUD());
+
 }
 void ABlasterPlayerController::OnPossess(APawn* inPawn)
 {
 	Super::OnPossess(inPawn);
 	ABlasterCharacter* blasterCharacter = Cast<ABlasterCharacter>(inPawn);
 	setHudHealth(blasterCharacter->getHealth(), blasterCharacter->getMaxHealth());
+	// ensure that the text is hidden when the player can return to play the game
+	showHideEliminatedText(false);
 }
 
 void ABlasterPlayerController::setHudHealth(const float health,const float maxHealth)
@@ -47,5 +50,36 @@ void ABlasterPlayerController::setHudHScore(const float score)
 	}
 
 }
+
+void ABlasterPlayerController::setHudDefeats(const int32 defeats)
+{
+	blasterHud = blasterHud == nullptr ? Cast<ABlasterHUD>(GetHUD()) : blasterHud;
+	bool bHudValid = blasterHud && blasterHud->characterOverlay && blasterHud->characterOverlay->defeatAmount;
+	if (bHudValid)
+	{
+		FString defeatText = FString::Printf(TEXT("%d"), defeats);
+		blasterHud->characterOverlay->defeatAmount->SetText(FText::FromString(defeatText));
+	}
+}
+
+void ABlasterPlayerController::showHideEliminatedText(bool isActive)
+{
+	blasterHud = blasterHud == nullptr ? Cast<ABlasterHUD>(GetHUD()) : blasterHud;
+	bool bHudValid = blasterHud && blasterHud->characterOverlay && blasterHud->characterOverlay->eliminatedText;
+	if (bHudValid)
+	{
+		if (isActive)
+		{
+			blasterHud->characterOverlay->eliminatedText->SetVisibility(ESlateVisibility::Visible);
+		}
+		else
+		{
+			blasterHud->characterOverlay->eliminatedText->SetVisibility(ESlateVisibility::Hidden);
+		}
+		
+	}
+}
+
+
 
 
