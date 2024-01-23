@@ -170,7 +170,11 @@ void UCombatComponent::onRep_EquippedWeapon()
 void UCombatComponent::equipWeapon(AWeaponMaster* weaponToequip)
 {
 	if (character == nullptr || weaponToequip == nullptr) return;
-
+	//check if the character is already holding a weapon and drop it
+	if (equippedWeapon)
+	{
+		equippedWeapon->dropped();
+	}
 	equippedWeapon = weaponToequip;
 	equippedWeapon->setWeaponState(EWeaponState::EWS_Equipped);
 	// this only works if a socket has been created on the character skeleton, to do so open the skeleton, right click on the right hand bone and add socket
@@ -182,6 +186,8 @@ void UCombatComponent::equipWeapon(AWeaponMaster* weaponToequip)
 		handSocket->AttachActor(equippedWeapon,character->GetMesh());
 	}
 	equippedWeapon->SetOwner(character);
+	// display the current ammo for the weapon on the server
+	equippedWeapon->setHudAmmo();
 	character->GetCharacterMovement()->bOrientRotationToMovement = false;
 	character->bUseControllerRotationYaw = true;
 }

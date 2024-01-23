@@ -29,5 +29,8 @@ public:
 	// variable binded to the widget visible property for the Defeats text
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* defeatAmount;
+	// variable binded to the widget visible property for the Ammo text
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* weaponAmmoAmount;
 
 };

@@ -524,6 +524,10 @@ void ABlasterCharacter::eliminated()
 
 void ABlasterCharacter::multicastEliminated_Implementation()
 {
+	if (blasterPlayerController)
+	{
+		blasterPlayerController->setHudWeaponAmmo(0);
+	}
 	bIsEliminated = true;
 	playEliminationMontage();
 

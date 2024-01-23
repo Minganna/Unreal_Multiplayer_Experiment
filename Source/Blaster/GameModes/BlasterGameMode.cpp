@@ -20,7 +20,10 @@ void ABlasterGameMode::playerEliminated(ABlasterCharacter* eliminaterCharacter, 
 	if (victimPlayerState)
 	{
 		victimPlayerState->addToDefeats(1);
-		victimPlayerState->showHideEliminatedText(true);
+	}
+	if (victimController)
+	{
+		victimController->showHideEliminatedText(true);
 	}
 	if (eliminaterCharacter != nullptr)
 	{

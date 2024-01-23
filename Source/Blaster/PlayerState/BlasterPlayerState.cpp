@@ -80,6 +80,8 @@ void ABlasterPlayerState::OnRep_Defeats()
 		if (controller)
 		{
 			controller->setHudDefeats(defeats);
+			//show a message on the screen that says that the character is eliminated, in the future might update it to show the name of the player that eliminated the player
+			showHideEliminatedText(true);
 		}
 	}
 }

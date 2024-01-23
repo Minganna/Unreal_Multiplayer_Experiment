@@ -62,6 +62,17 @@ void ABlasterPlayerController::setHudDefeats(const int32 defeats)
 	}
 }
 
+void ABlasterPlayerController::setHudWeaponAmmo(int32 ammo)
+{
+	blasterHud = blasterHud == nullptr ? Cast<ABlasterHUD>(GetHUD()) : blasterHud;
+	bool bHudValid = blasterHud && blasterHud->characterOverlay && blasterHud->characterOverlay->weaponAmmoAmount;
+	if (bHudValid)
+	{
+		FString weaponAmmoText = FString::Printf(TEXT("%d"), ammo);
+		blasterHud->characterOverlay->weaponAmmoAmount->SetText(FText::FromString(weaponAmmoText));
+	}
+}
+
 void ABlasterPlayerController::showHideEliminatedText(bool isActive)
 {
 	blasterHud = blasterHud == nullptr ? Cast<ABlasterHUD>(GetHUD()) : blasterHud;

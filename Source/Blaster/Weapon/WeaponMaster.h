@@ -32,6 +32,10 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	// function used to replicate to the clients variable set on the server
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	// function called when the owner of the actor is replicated
+	virtual void OnRep_Owner() override;
+	// function that handle the logic to display the weapon ammo on the screen
+	void setHudAmmo();
 	//function used to show/hide the pick up widget text
 	void showPickupWidget(bool bShowWidget);
 	// function called when the weapon is fired
@@ -107,6 +111,25 @@ private:
 	// the default speed which the weapon should zoom the field of view when aiming
 	UPROPERTY(EditAnywhere, Category = "Zoom Properties")
 	float zoomInterpSpeed{ 20.0f };
+
+	//ammo logic
+	// the number of ammo the weapon holds
+	UPROPERTY(EditAnywhere, ReplicatedUsing = onRep_Ammo, Category = "Ammos")
+	int32 ammo;
+	// function called when ammo is replicated
+	UFUNCTION()
+	void onRep_Ammo();
+	// remove a bullet when shoot
+	void spendRound();
+	// the max number of ammo the weapon can hold
+	UPROPERTY(EditAnywhere, Category = "Ammos")
+	int32 magCapacity;
+	// pointer to the owner character
+	UPROPERTY()
+	class ABlasterCharacter* characterOwner;
+	// pointer to the owner controller
+	UPROPERTY()
+	class ABlasterPlayerController* ownerController;
 
 
 public:

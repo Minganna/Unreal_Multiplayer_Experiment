@@ -20,6 +20,8 @@ public:
 	void setHudHScore(const float score);
 	// function used to update the value of defeats in the hud
 	void setHudDefeats(const int32 defeats);
+	// function used to update the value of weapon ammo in the hud
+	void setHudWeaponAmmo(int32 ammo);
 	// function used to show or hide the eliminated text on the hud
 	void showHideEliminatedText(bool isActive);
 	// function called when the pawn is possessed
