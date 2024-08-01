@@ -37,6 +37,11 @@ AWeaponMaster::AWeaponMaster()
 	pickupWidget->SetupAttachment(RootComponent);
 }
 
+bool AWeaponMaster::isEmpty()
+{
+	return ammo <= 0;
+}
+
 // Called when the game starts or when spawned
 void AWeaponMaster::BeginPlay()
 {
@@ -143,7 +148,7 @@ void AWeaponMaster::setHudAmmo()
 
 void AWeaponMaster::spendRound()
 {
-	--ammo;
+	ammo = FMath::Clamp(ammo - 1, 0, magCapacity);
 	setHudAmmo();
 }
 

@@ -82,7 +82,7 @@ void UCombatComponent::fireButtonPressed(bool bPressed)
 
 void UCombatComponent::fire()
 {
-	if (bCanFire)
+	if (canFire())
 	{
 		serverFire(hitTarget);
 		if (equippedWeapon)
@@ -116,6 +116,12 @@ void UCombatComponent::startFireTimer()
 	if (equippedWeapon == nullptr || character == nullptr) return;
 	bCanFire = false;
 	character->GetWorldTimerManager().SetTimer(fireTimer, this, &UCombatComponent::fireTimerFinished, equippedWeapon->fireDelay);
+}
+
+bool UCombatComponent::canFire()
+{
+	if (equippedWeapon == nullptr) return false;
+	return !equippedWeapon->isEmpty() || !bCanFire;
 }
 
 void UCombatComponent::fireTimerFinished()

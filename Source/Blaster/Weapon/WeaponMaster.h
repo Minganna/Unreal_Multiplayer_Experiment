@@ -51,6 +51,8 @@ public:
 	// time that should pass before the weapon fires again
 	UPROPERTY(EditAnywhere, Category = "Combat")
 	float fireDelay{ 0.15 };
+	// function used to determine if the weapon still has ammo's
+	bool isEmpty();
 
 protected:
 	// Called when the game starts or when spawned
@@ -149,5 +151,7 @@ public:
 	//getter for the zooming variables
 	FORCEINLINE float getZoomedFOV() const { return zoomedFOV; }
 	FORCEINLINE float getZoomInterpSpeed() const { return zoomInterpSpeed; }
+
+
 
 };

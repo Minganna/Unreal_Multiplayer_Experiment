@@ -127,6 +127,8 @@ private:
 	void fireTimerFinished();
 	// boolean that keep track if the weapon can fire
 	bool bCanFire{ true };
+	// function used to determine if the player can fire based on the number of ammo's
+	bool canFire();
 
 public:	
 	
